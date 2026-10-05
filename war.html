@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clash of Code | 50-Territory Syndicate Clan War</title>
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=JetBrains+Mono:wght@400;600;800&family=Russo+One&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body data-theme="cyberpunk" class="ranked-page-body war-page-body">
+  <!-- Scanline & Ambient Vignette FX -->
+  <div class="screen-vignette"></div>
+  <div class="crt-scanlines"></div>
+
+  <!-- Tactical Click Crosshair Container -->
+  <div id="crosshair-container" class="crosshair-container"></div>
+
+  <!-- ==================== MASSIVE CLAN WAR ARENA ==================== -->
+  <div class="ranked-battle-viewport war-battle-viewport">
+    
+    <!-- TOP TACTICAL HUD -->
+    <header class="ranked-top-hud war-top-hud">
+      <!-- Left: Exit to Clan HQ Button -->
+      <button class="ranked-back-btn" id="btn-war-back-clan" title="Return to Clan Headquarters">
+        <span class="back-arrow">‹</span>
+        <span class="back-text">CLAN HQ</span>
+      </button>
+
+      <!-- Center: Head to Head Scoreboard, 7-Day Clock & Member Attempt Meter -->
+      <div class="ranked-clash-hud war-clash-hud">
+        
+        <!-- BLUE HOME CLAN SIDE -->
+        <div class="faction-score-card faction-user war-faction-card">
+          <div class="faction-avatar-box blue-border">
+            <span class="clan-emblem-glyph" id="war-home-emblem">🛡️</span>
+            <span class="avatar-faction-tag blue-tag" id="war-home-tag">[KNIGHT]</span>
+          </div>
+          <div class="faction-details">
+            <span class="faction-name" id="war-home-name">BitKnights</span>
+            <span class="faction-rank" id="war-home-rank">ALLIANCE HQ</span>
+          </div>
+          <div class="territory-count-badge blue-count-badge">
+            <span class="count-num" id="war-blue-score">1</span>
+            <span class="count-lbl">SECTORS</span>
+          </div>
+        </div>
+
+        <!-- 7-DAY TIMER & ATTEMPTS CORE -->
+        <div class="ranked-timer-core war-timer-core">
+          <div class="match-mode-pill war-pill">WEEKLY SYNDICATE WAR (50 SECTORS)</div>
+          <div class="match-clock-box">
+            <span class="clock-icon">⏱️</span>
+            <span class="clock-display war-clock-display" id="war-countdown">06d : 23h : 59m : 45s</span>
+          </div>
+          
+          <!-- Member 5-Attempts Battery Indicator -->
+          <div class="war-attempts-battery-wrap">
+            <span class="attempts-lbl">YOUR ATTEMPTS:</span>
+            <div class="attempts-cells-row" id="attempts-cells-row">
+              <span class="attempt-pip filled" id="pip-1"></span>
+              <span class="attempt-pip filled" id="pip-2"></span>
+              <span class="attempt-pip filled" id="pip-3"></span>
+              <span class="attempt-pip filled" id="pip-4"></span>
+              <span class="attempt-pip filled" id="pip-5"></span>
+            </div>
+            <strong class="attempts-count-text" id="attempts-count-text">5 / 5 REMAINING</strong>
+          </div>
+        </div>
+
+        <!-- RED RIVAL SYNDICATE SIDE -->
+        <div class="faction-score-card faction-enemy war-faction-card">
+          <div class="territory-count-badge red-count-badge">
+            <span class="count-num" id="war-red-score">1</span>
+            <span class="count-lbl">SECTORS</span>
+          </div>
+          <div class="faction-details text-right">
+            <span class="faction-name" id="war-rival-name">CyberDragons</span>
+            <span class="faction-rank" id="war-rival-rank">RIVAL SYNDICATE</span>
+          </div>
+          <div class="faction-avatar-box red-border">
+            <span class="clan-emblem-glyph" id="war-rival-emblem">🐉</span>
+            <span class="avatar-faction-tag red-tag" id="war-rival-tag">[DRGN]</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: Sound & BGM Controller + Reset War (for Testing) -->
+      <div class="ranked-hud-controls">
+        <div id="auth-hud-widget" class="auth-hud-widget"></div>
+        <button class="ranked-back-btn reset-war-btn" id="btn-reset-war" title="Concede / Reset Clan War for testing">
+          <span>🏳️ CONCEDE</span>
+        </button>
+        <button class="ranked-icon-btn" id="btn-toggle-bgm" title="Toggle Music">
+          <span id="bgm-icon">🎵</span>
+        </button>
+        <button class="ranked-icon-btn" id="btn-toggle-sound" title="Toggle SFX">
+          <span id="sfx-icon">🔊</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- TACTICAL TELEMETRY SUB-STRIP -->
+    <div class="tactical-telemetry-bar war-telemetry-bar">
+      <div class="telemetry-item">
+        <span class="tele-dot blue-pulse"></span>
+        <span>BLUE ALLIANCE: <strong id="tele-war-blue">1 Sector</strong></span>
+      </div>
+      <div class="telemetry-item">
+        <span class="tele-dot white-pulse"></span>
+        <span>NEUTRAL CONTESTABLE: <strong id="tele-war-neutral">48 Sectors Available</strong></span>
+      </div>
+      <div class="telemetry-item">
+        <span class="tele-dot red-pulse"></span>
+        <span>RED SYNDICATE: <strong id="tele-war-red">1 Sector</strong></span>
+      </div>
+      <div class="telemetry-item war-bounty-telemetry">
+        <span class="tele-bounty-ico">🏆</span>
+        <span>WAR BOUNTY POOL: <strong style="color: #FACC15">50,000 CP</strong></span>
+      </div>
+      <!-- CLAN WAR ROOM ID & REALTIME NETWORK SYNC BADGE -->
+      <div class="telemetry-item room-telemetry-item war-room-telemetry" id="war-room-telemetry-item">
+        <button class="room-id-pill war-room-pill" id="war-room-id-pill" title="Click to copy war invite link">
+          <span class="room-lbl">WAR ROOM</span>
+          <strong class="room-code" id="war-room-code-text">WAR-G-....</strong>
+          <span class="room-copy-ico">📋</span>
+        </button>
+        <span class="net-status-badge net-badge-local" id="war-net-latency-badge" title="Clan database sync status">
+          <span class="net-pulse-dot"></span>
+          <span id="war-net-latency-text">INITIALIZING</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- MAIN TACTICAL MAP ARENA (50-Territory Continent) -->
+    <main class="ranked-map-stage war-map-stage">
+      
+      <div class="black-screen-map-container war-map-container" id="war-map-container">
+        <!-- Ambient Radar & Coordinate Grid Lines -->
+        <div class="tactical-radar-grid war-grid-pattern"></div>
+        <div class="tactical-scanner-line war-scanner-line"></div>
+
+        <!-- Massive State Outline SVG Map (1500 x 780 ViewBox) -->
+        <svg id="war-territory-map-svg" viewBox="0 0 1500 780" class="tactical-svg-map war-svg-map">
+          <defs>
+            <!-- Glow Filters -->
+            <filter id="war-blue-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="7" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="war-red-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="7" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <!-- COASTAL CONTINENT BATHYMETRY & OCEAN SHELF CONTOURS -->
+          <g id="war-svg-ocean-contours" class="svg-ocean-layer"></g>
+
+          <!-- TOPOGRAPHIC GEOGRAPHY (Mountains, Rivers, Compass Rose) -->
+          <g id="war-svg-geography-layer" class="svg-geography-layer"></g>
+
+          <!-- CONNECTING FRONTLINE ADJACENCY VECTORS -->
+          <g id="war-svg-routes-layer" class="svg-routes-layer"></g>
+
+          <!-- 50 TERRITORY OUTLINE POLYGONS (Crisp White Outlines) -->
+          <g id="war-svg-territories-layer" class="svg-territories-layer"></g>
+
+          <!-- TERRITORY CENTER BEACONS & INTERACTIVE DOTS -->
+          <g id="war-svg-beacons-layer" class="svg-beacons-layer"></g>
+        </svg>
+
+        <!-- Dynamic Tactical Notification Toast -->
+        <div id="tactical-notice-toast" class="tactical-notice-toast hidden">
+          <span class="notice-icon" id="toast-icon">ℹ️</span>
+          <span class="notice-text" id="toast-text">Conquer neighboring sectors first!</span>
+        </div>
+
+        <!-- Map Legend Floating HUD -->
+        <div class="map-legend-dock war-legend-dock">
+          <div class="legend-item">
+            <span class="legend-swatch swatch-blue"></span>
+            <span>BLUE (Your Clan)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch swatch-red"></span>
+            <span>RED (Rival Clan)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch swatch-neutral"></span>
+            <span>WHITE (Neutral)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot-indicator pulse-green"></span>
+            <span>PULSING (Connected)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-icon">🔒</span>
+            <span>LOCKED (Unconnected)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-icon">⚡</span>
+            <span>5 ATTEMPTS / MEMBER</span>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- BOTTOM CONTROLLER PROMPT BAR -->
+    <footer class="ranked-bottom-bar war-bottom-bar">
+      <div class="ranked-prompt-item">
+        <span class="key-pill">CLICK BEACON</span>
+        <span class="prompt-desc">Infiltrate Connected Territory</span>
+      </div>
+      <div class="ranked-prompt-item">
+        <span class="key-pill">LIMIT</span>
+        <span class="prompt-desc">5 Total Code Submissions / Developer per War</span>
+      </div>
+      <div class="ranked-prompt-item">
+        <span class="key-pill">DURATION</span>
+        <span class="prompt-desc">7-Day Weekly Syndicate Raid</span>
+      </div>
+      <div class="ranked-prompt-item">
+        <span class="key-pill">WINNER</span>
+        <span class="prompt-desc">Most Territories Captured Wins 50,000 CP</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==================== CODING CHALLENGE MODAL ==================== -->
+  <div id="challenge-modal-overlay" class="modal-overlay">
+    <div class="modal-dialog challenge-dialog" role="dialog" aria-modal="true">
+      <button class="modal-close-btn" id="btn-close-challenge">✕</button>
+
+      <div class="modal-header challenge-header">
+        <div class="challenge-title-group">
+          <div class="challenge-meta-row">
+            <span class="territory-code-pill" id="chal-territory-code">SECTOR 05</span>
+            <span class="chal-cat-pill" id="chal-category">DATA STRUCTURES</span>
+            <span class="chal-diff-pill diff-easy" id="chal-difficulty">EASY</span>
+            <span class="attempt-warn-tag" id="modal-attempt-tag">⚡ Consumes 1 Attempt (5 Left)</span>
+          </div>
+          <h2 class="modal-title" id="chal-title">Syndicate Infiltration</h2>
+        </div>
+        <div class="header-stat">
+          <span>Reward Upon Capture</span>
+          <strong style="color: #38BDF8">+1 BLUE ALLIANCE SECTOR</strong>
+        </div>
+      </div>
+
+      <div class="modal-body challenge-modal-body">
+        <div class="challenge-layout">
+          
+          <!-- LEFT: PROBLEM BRIEFING -->
+          <div class="challenge-brief-col">
+            <div class="brief-section">
+              <h4>TACTICAL OBJECTIVE</h4>
+              <p id="chal-description">
+                Solve the algorithm test suite to secure control of this sector for your syndicate.
+              </p>
+            </div>
+
+            <div class="brief-section">
+              <h4>EXAMPLES</h4>
+              <div class="example-box">
+                <div><strong>Input:</strong> <code id="chal-example-in">nums = [2,7,11,15], target = 9</code></div>
+                <div><strong>Output:</strong> <code id="chal-example-out">[0, 1]</code></div>
+                <div class="example-explain" id="chal-example-note">Explanation: nums[0] + nums[1] == 9</div>
+              </div>
+            </div>
+
+            <div class="brief-section">
+              <h4>CONSTRAINTS &amp; ATTEMPTS</h4>
+              <ul class="constraints-list" id="chal-constraints">
+                <li><code>1 &lt;= nums.length &lt;= 10^4</code></li>
+                <li>Each test execution or submission uses 1 of your 5 weekly clan war attempts.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- RIGHT: CODE EDITOR & TEST RUNNER -->
+          <div class="challenge-editor-col">
+            <div class="editor-top-toolbar">
+              <div class="editor-lang-group">
+                <span class="editor-lang-lbl">COMPILER:</span>
+                <select id="editor-lang-select" class="editor-lang-select" title="Select target compiler language">
+                  <option value="nodejs" selected>JavaScript (NodeJS)</option>
+                  <option value="python3">Python 3 (v4)</option>
+                </select>
+                <span class="jdoodle-live-pill" id="jdoodle-status-pill" title="JDoodle API Cloud Compiler Connection">
+                  <span class="jdoodle-dot"></span> JDOODLE API
+                </span>
+              </div>
+              <button class="quick-solve-btn" id="btn-quick-solve" title="Autofill optimal working solution">
+                ⚡ AUTO-SOLVE (DEMO)
+              </button>
+            </div>
+
+            <div class="code-textarea-wrap">
+              <textarea id="code-editor-input" class="code-editor-textarea" spellcheck="false" autocomplete="off"></textarea>
+            </div>
+
+            <!-- Console Output Area -->
+            <div class="test-console-box" id="test-console-box">
+              <div class="console-head">
+                <span>TEST VERIFICATION SUITE</span>
+                <span class="console-status" id="console-status-pill">Awaiting execution</span>
+              </div>
+              <div class="console-output" id="console-output-text">
+                Click "Run Tests" or "Submit Solution" to evaluate code.
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="editor-actions-row">
+              <button class="action-test-btn" id="btn-run-tests">
+                <span>▶ RUN TESTS</span>
+              </button>
+              <button class="action-submit-btn" id="btn-submit-solution">
+                <span>⚔️ SUBMIT &amp; CAPTURE SECTOR</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== ENDGAME / CONCESSION MODAL ==================== -->
+  <div id="endgame-modal-overlay" class="modal-overlay">
+    <div class="modal-dialog endgame-dialog" id="endgame-dialog-box" role="dialog" aria-modal="true">
+      
+      <div class="endgame-banner-box" id="endgame-banner">
+        <div class="endgame-trophy-icon" id="endgame-trophy">🏆</div>
+        <h2 class="endgame-headline" id="endgame-headline">SYNDICATE VICTORY!</h2>
+        <p class="endgame-subline" id="endgame-subline">Your clan secured the continent conquest!</p>
+      </div>
+
+      <div class="modal-body endgame-body">
+        
+        <!-- Scoreboard Comparison -->
+        <div class="endgame-score-card">
+          <div class="endgame-side blue-side">
+            <span class="side-tag" id="endgame-home-clan-tag">BITKNIGHTS</span>
+            <strong class="side-sectors" id="final-blue-count">28 SECTORS</strong>
+            <span class="side-user">Alliance Leader</span>
+          </div>
+          <div class="endgame-vs-divider">VS</div>
+          <div class="endgame-side red-side">
+            <span class="side-tag" id="endgame-rival-clan-tag">CYBERDRAGONS</span>
+            <strong class="side-sectors" id="final-red-count">22 SECTORS</strong>
+            <span class="side-user">Rival Syndicate</span>
+          </div>
+        </div>
+
+        <!-- Rewards Earned -->
+        <div class="endgame-rewards-box" id="endgame-rewards">
+          <h4>CLAN WAR BOUNTY EARNED</h4>
+          <div class="rewards-chips-row">
+            <div class="reward-chip gold-chip">
+              <span class="chip-ico">🪙</span>
+              <span class="chip-val" id="reward-cp">+50,000 CP</span>
+            </div>
+            <div class="reward-chip exp-chip">
+              <span class="chip-ico">⚡</span>
+              <span class="chip-val" id="reward-xp">+500 XP</span>
+            </div>
+            <div class="reward-chip elo-chip">
+              <span class="chip-ico">👑</span>
+              <span class="chip-val" id="reward-elo">TITAN CREST</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="endgame-actions-row">
+          <button class="endgame-btn hub-btn" id="btn-return-clan-hq" style="flex: 1;">
+            <span>‹ RETURN TO CLAN HQ</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="/src/war.js"></script>
+</body>
+</html>
