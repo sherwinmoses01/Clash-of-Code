@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" class="learn-html">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clash of Code | Striver's A2Z DSA Roadmap</title>
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=JetBrains+Mono:wght@400;600&family=Russo+One&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body data-theme="cyberpunk" class="learn-roadmap-page">
+  <!-- Scanline & Ambient Vignette FX -->
+  <div class="screen-vignette"></div>
+  <div class="crt-scanlines"></div>
+
+  <!-- Tactical Click Crosshair Container -->
+  <div id="crosshair-container" class="crosshair-container"></div>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <div class="game-viewport learn-viewport active">
+    
+    <!-- TOP BAR HUD -->
+    <header class="top-hud learn-hud">
+      
+      <!-- Left: Back to Hub Button -->
+      <div class="learn-hud-left">
+        <button class="ranked-back-btn" id="btn-back-hub" title="Return to Arena Hub">
+          <span class="back-arrow">◀</span>
+          <span>ARENA HUB</span>
+        </button>
+      </div>
+
+      <!-- Center: Roadmap Title & Global Mastery Meter -->
+      <div class="learn-hud-center">
+        <div class="learn-headline-box">
+          <div class="learn-title-row">
+            <span class="learn-badge-pill">STRIVER'S A2Z</span>
+            <h1 class="learn-main-title">DSA ROAD MAP</h1>
+            <span class="learn-ver-pill">LEETCODE VERIFIED</span>
+          </div>
+          <span class="learn-sub-desc">Comprehensive Algorithms & Data Structures Path with Direct LeetCode Solutions</span>
+        </div>
+
+        <!-- Live Progress Counter Battery -->
+        <div class="learn-global-progress-bar-wrap">
+          <div class="progress-meta-row">
+            <span class="progress-label">TOTAL MASTERY:</span>
+            <strong class="progress-count" id="progress-count">0 / 120</strong>
+            <span class="progress-pct-badge" id="progress-percent">0%</span>
+          </div>
+          <div class="global-progress-track">
+            <div class="global-progress-fill" id="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Auth Widget & Audio Controls -->
+      <div class="ranked-hud-controls">
+        <div id="auth-hud-widget" class="auth-hud-widget"></div>
+        <button class="ranked-icon-btn" id="btn-toggle-bgm" title="Toggle Music">
+          <span id="bgm-icon">🎵</span>
+        </button>
+        <button class="ranked-icon-btn" id="btn-toggle-sound" title="Toggle SFX">
+          <span id="sfx-icon">🔊</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ROADMAP TACTICAL CONTROLS & FILTER BAR -->
+    <div class="learn-controls-bar">
+      
+      <!-- Search Box -->
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          id="search-problems-input" 
+          class="roadmap-search-input" 
+          placeholder="Search problems by name, LeetCode #, or topic..."
+          autocomplete="off"
+        >
+      </div>
+
+      <!-- Difficulty Filter Pills -->
+      <div class="filter-pills-group">
+        <button class="filter-pill-btn active" data-filter="ALL">ALL</button>
+        <button class="filter-pill-btn filter-easy" data-filter="EASY">EASY</button>
+        <button class="filter-pill-btn filter-medium" data-filter="MEDIUM">MEDIUM</button>
+        <button class="filter-pill-btn filter-hard" data-filter="HARD">HARD</button>
+      </div>
+
+      <!-- Jump To Step Dropdown -->
+      <div class="step-dropdown-wrapper">
+        <label for="step-select-dropdown" class="step-select-label">JUMP TO:</label>
+        <select id="step-select-dropdown" class="step-select-dropdown">
+          <option value="ALL">All 17 Steps</option>
+          <option value="1">Step 01 - Basics & Math</option>
+          <option value="2">Step 02 - Sorting Techniques</option>
+          <option value="3">Step 03 - Arrays (Easy/Med/Hard)</option>
+          <option value="4">Step 04 - Binary Search</option>
+          <option value="5">Step 05 - Strings</option>
+          <option value="6">Step 06 - LinkedList</option>
+          <option value="7">Step 07 - Recursion & Backtracking</option>
+          <option value="8">Step 08 - Bit Manipulation</option>
+          <option value="9">Step 09 - Stack and Queues</option>
+          <option value="10">Step 10 - Sliding Window</option>
+          <option value="11">Step 11 - Heaps & Priority Queues</option>
+          <option value="12">Step 12 - Greedy Algorithms</option>
+          <option value="13">Step 13 - Binary Trees</option>
+          <option value="14">Step 14 - BST (Search Trees)</option>
+          <option value="15">Step 15 - Graphs</option>
+          <option value="16">Step 16 - Dynamic Programming</option>
+          <option value="17">Step 17 - Tries</option>
+        </select>
+      </div>
+
+      <!-- Expand / Collapse All & JDoodle Cloud Compiler -->
+      <div class="view-toggles-group">
+        <button class="view-toggle-btn" id="btn-expand-all" title="Expand all roadmap steps">EXPAND ALL</button>
+        <button class="view-toggle-btn" id="btn-collapse-all" title="Collapse all roadmap steps">COLLAPSE ALL</button>
+        <button class="view-toggle-btn jdoodle-launch-btn" id="btn-open-jdoodle" title="Launch JDoodle Cloud Compiler Workbench">
+          <span class="jdoodle-icon">⚡</span>
+          <span>CLOUD COMPILER</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN ROADMAP TIMELINE CONTAINER -->
+    <main class="learn-main-stage">
+      <div class="roadmap-timeline-spine"></div>
+      <div class="roadmap-steps-container" id="roadmap-steps-container">
+        <!-- Dynamically injected by src/learn.js -->
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ==================== JDOODLE CLOUD COMPILER MODAL ==================== -->
+  <div id="jdoodle-modal-overlay" class="modal-overlay">
+    <div class="modal-dialog challenge-dialog jdoodle-scratchpad-dialog" role="dialog" aria-modal="true">
+      
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-badge-tag" id="scratchpad-badge">DSA WORKBENCH</span>
+          <h3 class="modal-main-title" id="scratchpad-title">JDOODLE CLOUD COMPILER</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-jdoodle-modal" title="Close Compiler">✕</button>
+      </div>
+
+      <div class="modal-body challenge-modal-body">
+        <div class="challenge-editor-col" style="flex: 1; width: 100%;">
+          <div class="editor-top-toolbar">
+            <div class="editor-lang-group">
+              <span class="editor-lang-lbl">COMPILER:</span>
+              <select id="scratchpad-lang-select" class="editor-lang-select" title="Select target compiler language">
+                <option value="python3" selected>Python 3 (v4)</option>
+                <option value="nodejs">JavaScript (NodeJS)</option>
+              </select>
+              <span class="jdoodle-live-pill" id="scratchpad-status-pill" title="JDoodle API Cloud Compiler Connection">
+                <span class="jdoodle-dot"></span> JDOODLE API
+              </span>
+            </div>
+            <div class="scratchpad-presets-group">
+              <button class="quick-solve-btn" id="btn-scratchpad-hello" title="Load Hello World snippet">
+                ⚡ HELLO WORLD
+              </button>
+              <button class="quick-solve-btn" id="btn-scratchpad-clear" title="Clear editor">
+                🗑️ CLEAR
+              </button>
+            </div>
+          </div>
+
+          <div class="code-textarea-wrap">
+            <textarea id="scratchpad-code-input" class="code-editor-textarea" spellcheck="false" autocomplete="off" rows="12">print("Hello World")</textarea>
+          </div>
+
+          <!-- Console Output Area -->
+          <div class="test-console-box" id="scratchpad-console-box">
+            <div class="console-head">
+              <span>TERMINAL OUTPUT (STDOUT)</span>
+              <span class="console-status" id="scratchpad-console-status">Awaiting execution</span>
+            </div>
+            <div class="console-output" id="scratchpad-console-output">
+              Click "▶ COMPILE &amp; RUN" to execute code on JDoodle Cloud servers and view output.
+            </div>
+          </div>
+
+          <!-- Action Row -->
+          <div class="editor-actions-row">
+            <button class="action-test-btn" id="btn-scratchpad-run" style="flex: 1;">
+              <span>▶ COMPILE &amp; RUN (JDOODLE API)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script type="module" src="/src/learn.js"></script>
+</body>
+</html>
