@@ -860,8 +860,19 @@ export function openRepoModal() {
 }
 
 // 7. TRAIN MODAL
-export function openTrainModal() {
-  const q = gameState.trainQuestions[Math.floor(Math.random() * gameState.trainQuestions.length)];
+let currentTrainIndex = 0;
+
+export function openTrainModal(questionIndex = null) {
+  const questions = gameState.trainQuestions;
+  if (!questions || questions.length === 0) return;
+
+  if (typeof questionIndex === 'number' && questionIndex >= 0) {
+    currentTrainIndex = questionIndex % questions.length;
+  } else if (questionIndex === null) {
+    currentTrainIndex = currentTrainIndex % questions.length;
+  }
+
+  const q = questions[currentTrainIndex];
 
   const content = `
     <div class="modal-header train-header">
@@ -877,7 +888,10 @@ export function openTrainModal() {
     <div class="modal-body">
       <div class="quiz-container">
         <div class="quiz-question-card">
-          <span class="quiz-badge">${q.title}</span>
+          <div class="quiz-header-meta">
+            <span class="quiz-badge">${q.title}</span>
+            <span class="quiz-counter">KATA ${currentTrainIndex + 1} OF ${questions.length}</span>
+          </div>
           <h3 class="quiz-prompt">${q.prompt}</h3>
         </div>
         <div class="quiz-options-list">
@@ -889,6 +903,12 @@ export function openTrainModal() {
           `).join('')}
         </div>
         <div id="quiz-feedback" class="quiz-feedback hidden"></div>
+        <div class="quiz-nav-footer">
+          <span class="quiz-footer-hint">Sparring Kata ${currentTrainIndex + 1} of ${questions.length}</span>
+          <button id="btn-next-kata" class="next-kata-btn" title="Next Sparring Kata">
+            <span>NEXT KATA ➔</span>
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -897,9 +917,24 @@ export function openTrainModal() {
 
   const options = modalContainer.querySelectorAll('.quiz-option-btn');
   const feedback = modalContainer.querySelector('#quiz-feedback');
+  const nextBtn = modalContainer.querySelector('#btn-next-kata');
+
+  const goToNextKata = () => {
+    sounds.playClick();
+    openTrainModal((currentTrainIndex + 1) % questions.length);
+  };
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', goToNextKata);
+  }
+
+  let answered = false;
 
   options.forEach(btn => {
     btn.addEventListener('click', () => {
+      if (answered) return;
+      answered = true;
+
       const isCorrect = btn.getAttribute('data-correct') === 'true';
       options.forEach(b => b.disabled = true);
 
@@ -910,6 +945,11 @@ export function openTrainModal() {
         feedback.innerHTML = `
           <h4>🎯 EXCELLENT STRIKE! (+100 CP, +20 XP)</h4>
           <p>${q.explanation}</p>
+          <div class="quiz-feedback-actions">
+            <button id="btn-feedback-next" class="next-kata-btn feedback-glow">
+              <span>NEXT KATA ➔</span>
+            </button>
+          </div>
         `;
         addPlayerCodePoints(100);
         addPlayerXp(20);
@@ -925,9 +965,19 @@ export function openTrainModal() {
         feedback.innerHTML = `
           <h4>⚠️ SYNTAX BLOCKED!</h4>
           <p>${q.explanation}</p>
+          <div class="quiz-feedback-actions">
+            <button id="btn-feedback-next" class="next-kata-btn feedback-glow">
+              <span>NEXT KATA ➔</span>
+            </button>
+          </div>
         `;
       }
       feedback.classList.remove('hidden');
+
+      const feedbackNextBtn = feedback.querySelector('#btn-feedback-next');
+      if (feedbackNextBtn) {
+        feedbackNextBtn.addEventListener('click', goToNextKata);
+      }
     });
   });
 }
