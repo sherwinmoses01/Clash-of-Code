@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clash of Code | Ranked Territory Conquest Duel</title>
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=JetBrains+Mono:wght@400;600;800&family=Russo+One&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body data-theme="cyberpunk" class="ranked-page-body">
+  <!-- Scanline & Ambient Vignette FX -->
+  <div class="screen-vignette"></div>
+  <div class="crt-scanlines"></div>
+
+  <!-- Tactical Click Crosshair Container -->
+  <div id="crosshair-container" class="crosshair-container"></div>
+
+  <!-- ==================== RANKED BATTLE MAP VIEW ==================== -->
+  <div class="ranked-battle-viewport">
+    
+    <!-- TOP TACTICAL HUD -->
+    <header class="ranked-top-hud">
+      <!-- Left: Concede / Hub Button -->
+      <button class="ranked-back-btn" id="btn-concede-match" title="Concede match and return to hub">
+        <span class="back-arrow">‹</span>
+        <span class="back-text">EXIT TO HUB</span>
+      </button>
+
+      <!-- Center: Head to Head Scoreboard & Match Clock -->
+      <div class="ranked-clash-hud">
+        
+        <!-- BLUE USER SIDE -->
+        <div class="faction-score-card faction-user">
+          <div class="faction-avatar-box blue-border">
+            <img src="/assets/ai_coach.jpg" alt="User Avatar" class="mini-avatar-img">
+            <span class="avatar-faction-tag blue-tag">YOU</span>
+          </div>
+          <div class="faction-details">
+            <span class="faction-name" id="user-display-name">NeoCoder_42</span>
+            <span class="faction-rank">2,840 ELO</span>
+          </div>
+          <div class="territory-count-badge blue-count-badge">
+            <span class="count-num" id="blue-score-count">1</span>
+            <span class="count-lbl">SECTORS</span>
+          </div>
+        </div>
+
+        <!-- VS & TIMER CORE -->
+        <div class="ranked-timer-core">
+          <div class="match-mode-pill">TERRITORY CONQUEST</div>
+          <div class="match-clock-box">
+            <span class="clock-icon">⏱️</span>
+            <span class="clock-display" id="match-countdown">05:00</span>
+          </div>
+          <span class="clock-status-sub" id="tactical-status-text">BATTLEFIELD ACTIVE</span>
+        </div>
+
+        <!-- RED ENEMY SIDE -->
+        <div class="faction-score-card faction-enemy">
+          <div class="territory-count-badge red-count-badge">
+            <span class="count-num" id="red-score-count">1</span>
+            <span class="count-lbl">SECTORS</span>
+          </div>
+          <div class="faction-details text-right">
+            <span class="faction-name" id="enemy-display-name">ZeroDayNinja</span>
+            <span class="faction-rank">2,890 ELO</span>
+          </div>
+          <div class="faction-avatar-box red-border">
+            <span class="enemy-avatar-icon">🐉</span>
+            <span class="avatar-faction-tag red-tag">RIVAL</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: Sound & BGM Controller -->
+      <div class="ranked-hud-controls">
+        <div id="auth-hud-widget" class="auth-hud-widget"></div>
+        <button class="ranked-icon-btn" id="btn-toggle-bgm" title="Toggle Littleroot BGM">
+          <span id="bgm-icon">🎵</span>
+        </button>
+        <button class="ranked-icon-btn" id="btn-toggle-sound" title="Toggle SFX">
+          <span id="sfx-icon">🔊</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- TACTICAL TELEMETRY SUB-STRIP -->
+    <div class="tactical-telemetry-bar">
+      <div class="telemetry-item">
+        <span class="tele-dot blue-pulse"></span>
+        <span>BLUE ALLIANCE: <strong id="tele-blue-status">1 Controlled (West Base)</strong></span>
+      </div>
+      <div class="telemetry-item">
+        <span class="tele-dot white-pulse"></span>
+        <span>CONTESTABLE NEUTRAL: <strong id="tele-neutral-status">8 Sectors Available</strong></span>
+      </div>
+      <div class="telemetry-item">
+        <span class="tele-dot red-pulse"></span>
+        <span>RED SYNDICATE: <strong id="tele-red-status">1 Controlled (East Core)</strong></span>
+      </div>
+      <!-- ROOM ID & REALTIME NETWORK SYNC BADGE -->
+      <div class="telemetry-item room-telemetry-item" id="room-telemetry-item">
+        <button class="room-id-pill" id="room-id-pill" title="Click to copy invite link">
+          <span class="room-lbl">ROOM</span>
+          <strong class="room-code" id="room-code-text">ROOM-R-....</strong>
+          <span class="room-copy-ico">📋</span>
+        </button>
+        <span class="net-status-badge net-badge-local" id="net-latency-badge" title="Real-time database sync status">
+          <span class="net-pulse-dot"></span>
+          <span id="net-latency-text">INITIALIZING</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- MAIN TACTICAL MAP ARENA -->
+    <main class="ranked-map-stage">
+      
+      <div class="black-screen-map-container" id="map-container">
+        <!-- Ambient Radar & Coordinate Grid Lines -->
+        <div class="tactical-radar-grid"></div>
+        <div class="tactical-scanner-line"></div>
+
+        <!-- State Outline SVG Map with White Outline Lines -->
+        <svg id="territory-map-svg" viewBox="0 0 1000 560" class="tactical-svg-map">
+          <defs>
+            <!-- Glow Filters -->
+            <filter id="blue-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="6" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="red-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="6" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <filter id="pulse-glow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="8" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <!-- CONNECTING FRONTLINE ADJACENCY VECTORS -->
+          <g id="svg-frontline-routes" class="svg-routes-layer"></g>
+
+          <!-- STATE / TERRITORY OUTLINE POLYGONS (Crisp White Outlines) -->
+          <g id="svg-territories-layer" class="svg-territories-layer"></g>
+
+          <!-- TERRITORY CENTER BEACONS & INTERACTIVE DOTS -->
+          <g id="svg-beacons-layer" class="svg-beacons-layer"></g>
+        </svg>
+
+        <!-- Dynamic Tactical Notification Toast -->
+        <div id="tactical-notice-toast" class="tactical-notice-toast hidden">
+          <span class="notice-icon" id="toast-icon">ℹ️</span>
+          <span class="notice-text" id="toast-text">Conquer neighboring sectors first!</span>
+        </div>
+
+        <!-- Map Legend Floating HUD -->
+        <div class="map-legend-dock">
+          <div class="legend-item">
+            <span class="legend-swatch swatch-blue"></span>
+            <span>BLUE (Your Territory)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch swatch-red"></span>
+            <span>RED (Enemy Territory)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-swatch swatch-neutral"></span>
+            <span>WHITE OUTLINE (Neutral)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot-indicator pulse-green"></span>
+            <span>PULSING (Ready to Conquer)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-icon">🔒</span>
+            <span>LOCKED (Not Connected)</span>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- BOTTOM CONTROLLER PROMPT BAR -->
+    <footer class="ranked-bottom-bar">
+      <div class="ranked-prompt-item">
+        <span class="key-pill">CLICK DOT</span>
+        <span class="prompt-desc">Open Coding Problem on Connected Territory</span>
+      </div>
+      <div class="ranked-prompt-item">
+        <span class="key-pill">RULE</span>
+        <span class="prompt-desc">Must conquer adjacent territories connected to your base</span>
+      </div>
+      <div class="ranked-prompt-item">
+        <span class="key-pill">WINNER</span>
+        <span class="prompt-desc">Most territories captured wins ranked rewards</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==================== CODING CHALLENGE MODAL ==================== -->
+  <div id="challenge-modal-overlay" class="modal-overlay">
+    <div class="modal-dialog challenge-dialog" role="dialog" aria-modal="true">
+      <button class="modal-close-btn" id="btn-close-challenge">✕</button>
+
+      <div class="modal-header challenge-header">
+        <div class="challenge-title-group">
+          <div class="challenge-meta-row">
+            <span class="territory-code-pill" id="chal-territory-code">SECTOR 02</span>
+            <span class="chal-cat-pill" id="chal-category">ARRAYS & HASH</span>
+            <span class="chal-diff-pill diff-easy" id="chal-difficulty">EASY</span>
+          </div>
+          <h2 class="modal-title" id="chal-title">Two-Sum Target Finder</h2>
+        </div>
+        <div class="header-stat">
+          <span>Reward Upon Capture</span>
+          <strong style="color: #38BDF8">+1 BLUE SECTOR</strong>
+        </div>
+      </div>
+
+      <div class="modal-body challenge-modal-body">
+        <div class="challenge-layout">
+          
+          <!-- LEFT: PROBLEM BRIEFING -->
+          <div class="challenge-brief-col">
+            <div class="brief-section">
+              <h4>TACTICAL OBJECTIVE</h4>
+              <p id="chal-description">
+                Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to <code>target</code>.
+              </p>
+            </div>
+
+            <div class="brief-section">
+              <h4>EXAMPLES</h4>
+              <div class="example-box">
+                <div><strong>Input:</strong> <code id="chal-example-in">nums = [2,7,11,15], target = 9</code></div>
+                <div><strong>Output:</strong> <code id="chal-example-out">[0, 1]</code></div>
+                <div class="example-explain" id="chal-example-note">Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].</div>
+              </div>
+            </div>
+
+            <div class="brief-section">
+              <h4>CONSTRAINTS</h4>
+              <ul class="constraints-list" id="chal-constraints">
+                <li><code>2 &lt;= nums.length &lt;= 10^4</code></li>
+                <li>Only one valid answer exists.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- RIGHT: CODE EDITOR & TEST RUNNER -->
+          <div class="challenge-editor-col">
+            <div class="editor-top-toolbar">
+              <div class="editor-lang-group">
+                <span class="editor-lang-lbl">COMPILER:</span>
+                <select id="editor-lang-select" class="editor-lang-select" title="Select target compiler language">
+                  <option value="nodejs" selected>JavaScript (NodeJS)</option>
+                  <option value="python3">Python 3 (v4)</option>
+                </select>
+                <span class="jdoodle-live-pill" id="jdoodle-status-pill" title="JDoodle API Cloud Compiler Connection">
+                  <span class="jdoodle-dot"></span> JDOODLE API
+                </span>
+              </div>
+              <button class="quick-solve-btn" id="btn-quick-solve" title="Autofill optimal working solution">
+                ⚡ AUTO-SOLVE (DEMO)
+              </button>
+            </div>
+
+            <div class="code-textarea-wrap">
+              <textarea id="code-editor-input" class="code-editor-textarea" spellcheck="false" autocomplete="off"></textarea>
+            </div>
+
+            <!-- Console Output Area -->
+            <div class="test-console-box" id="test-console-box">
+              <div class="console-head">
+                <span>TEST VERIFICATION SUITE</span>
+                <span class="console-status" id="console-status-pill">Awaiting execution</span>
+              </div>
+              <div class="console-output" id="console-output-text">
+                Click "Run Tests" or "Submit Solution" to evaluate code.
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="editor-actions-row">
+              <button class="action-test-btn" id="btn-run-tests">
+                <span>▶ RUN TESTS</span>
+              </button>
+              <button class="action-submit-btn" id="btn-submit-solution">
+                <span>⚔️ SUBMIT & CAPTURE TERRITORY</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== VICTORY / DEFEAT MODAL ==================== -->
+  <div id="endgame-modal-overlay" class="modal-overlay">
+    <div class="modal-dialog endgame-dialog" id="endgame-dialog-box" role="dialog" aria-modal="true">
+      
+      <div class="endgame-banner-box" id="endgame-banner">
+        <div class="endgame-trophy-icon" id="endgame-trophy">🏆</div>
+        <h2 class="endgame-headline" id="endgame-headline">TACTICAL VICTORY!</h2>
+        <p class="endgame-subline" id="endgame-subline">You conquered the majority of state territories!</p>
+      </div>
+
+      <div class="modal-body endgame-body">
+        
+        <!-- Scoreboard Comparison -->
+        <div class="endgame-score-card">
+          <div class="endgame-side blue-side">
+            <span class="side-tag">YOUR ALLIANCE</span>
+            <strong class="side-sectors" id="final-blue-count">6 SECTORS</strong>
+            <span class="side-user">NeoCoder_42</span>
+          </div>
+          <div class="endgame-vs-divider">VS</div>
+          <div class="endgame-side red-side">
+            <span class="side-tag">ENEMY FACTION</span>
+            <strong class="side-sectors" id="final-red-count">4 SECTORS</strong>
+            <span class="side-user">ZeroDayNinja</span>
+          </div>
+        </div>
+
+        <!-- Rewards Earned -->
+        <div class="endgame-rewards-box" id="endgame-rewards">
+          <h4>REWARDS EARNED</h4>
+          <div class="rewards-chips-row">
+            <div class="reward-chip gold-chip">
+              <span class="chip-ico">🪙</span>
+              <span class="chip-val" id="reward-cp">+350 CP</span>
+            </div>
+            <div class="reward-chip exp-chip">
+              <span class="chip-ico">⚡</span>
+              <span class="chip-val" id="reward-xp">+60 XP</span>
+            </div>
+            <div class="reward-chip elo-chip">
+              <span class="chip-ico">⚔️</span>
+              <span class="chip-val" id="reward-elo">+45 ELO</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="endgame-actions-row">
+          <button class="endgame-btn rematch-btn" id="btn-play-again">
+            <span>🔄 PLAY REMATCH</span>
+          </button>
+          <button class="endgame-btn hub-btn" id="btn-return-hub">
+            <span>‹ RETURN TO HUB</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="/src/ranked.js"></script>
+</body>
+</html>
