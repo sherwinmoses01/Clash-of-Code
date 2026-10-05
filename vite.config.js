@@ -28,7 +28,6 @@ export default defineConfig(({ mode }) => {
                 const parsed = JSON.parse(body || '{}');
                 const rawKey = parsed.apiKey || env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || '';
                 const apiKey = String(rawKey).replace(/^["']|["']$/g, '').trim();
-                const model = 'gemini-3.6-flash';
                 const prompt = parsed.prompt || '';
                 const systemInstruction = parsed.systemInstruction || '';
 
@@ -46,28 +45,47 @@ export default defineConfig(({ mode }) => {
                 }
                 contents.push({ role: 'user', parts: [{ text: prompt }] });
 
-                const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-                const response = await fetch(targetUrl, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    contents,
-                    generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
-                  })
-                });
+                const candidateModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+                let finalData = null;
+                let usedModel = 'gemini-3.6-flash';
+                let lastErrText = '';
 
-                if (!response.ok) {
-                  const errText = await response.text();
-                  res.statusCode = response.status;
-                  res.setHeader('Content-Type', 'application/json');
-                  res.end(JSON.stringify({ error: `Gemini API error ${response.status}: ${errText}` }));
-                  return;
+                for (const currentModel of candidateModels) {
+                  try {
+                    const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
+                    const response = await fetch(targetUrl, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        contents,
+                        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
+                      })
+                    });
+
+                    if (response.ok) {
+                      const data = await response.json();
+                      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                      if (text) {
+                        finalData = text;
+                        usedModel = currentModel;
+                        break;
+                      }
+                    } else {
+                      lastErrText = await response.text();
+                    }
+                  } catch (fetchErr) {
+                    lastErrText = fetchErr.message;
+                  }
                 }
 
-                const data = await response.json();
-                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify({ text, model }));
+                if (finalData) {
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ text: finalData, model: usedModel }));
+                } else {
+                  res.statusCode = 502;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ error: `Gemini API service busy: ${lastErrText}` }));
+                }
               } catch (err) {
                 res.statusCode = 500;
                 res.setHeader('Content-Type', 'application/json');
@@ -97,39 +115,42 @@ export default defineConfig(({ mode }) => {
                 const stdin = parsed.stdin || '';
                 const geminiKey = (env.VITE_GEMINI_API_KEY || '').replace(/^["']|["']$/g, '').trim();
 
-                // If Gemini key is set, evaluate via Gemini 3.6 Flash
+                // If Gemini key is set, evaluate via Gemini 3.6 Flash / fallback cascade
                 if (geminiKey && !geminiKey.includes('your_') && geminiKey.length > 15) {
-                  try {
-                    const prompt = `You are a real-time code compiler and runtime engine. Language: ${language}.
+                  const candidateCompilerModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+                  for (const cModel of candidateCompilerModels) {
+                    try {
+                      const prompt = `You are a real-time code compiler and runtime engine. Language: ${language}.
 ${stdin ? `Standard Input (stdin):\n${stdin}\n` : ''}
 Code:
 \`\`\`${language.includes('py') ? 'python' : 'javascript'}
 ${script}
 \`\`\`
 Execute this code and output ONLY standard output (stdout) with no extra commentary or markdown:`;
-                    const gRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                        generationConfig: { temperature: 0.0, maxOutputTokens: 2048 }
-                      })
-                    });
-                    if (gRes.ok) {
-                      const gData = await gRes.json();
-                      const out = gData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                      res.setHeader('Content-Type', 'application/json');
-                      res.end(JSON.stringify({
-                        output: out.trim(),
-                        statusCode: 200,
-                        memory: '32KB (Gemini 3.6 Flash)',
-                        cpuTime: '0.04s',
-                        isMockFallback: false
-                      }));
-                      return;
+                      const gRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cModel}:generateContent?key=${geminiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                          generationConfig: { temperature: 0.0, maxOutputTokens: 2048 }
+                        })
+                      });
+                      if (gRes.ok) {
+                        const gData = await gRes.json();
+                        const out = gData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(JSON.stringify({
+                          output: out.trim(),
+                          statusCode: 200,
+                          memory: `32KB (${cModel})`,
+                          cpuTime: '0.04s',
+                          isMockFallback: false
+                        }));
+                        return;
+                      }
+                    } catch (_) {
+                      // Try next model
                     }
-                  } catch (gErr) {
-                    console.warn('[Gemini 3.6 Flash Compiler Proxy Warning]:', gErr.message);
                   }
                 }
 
