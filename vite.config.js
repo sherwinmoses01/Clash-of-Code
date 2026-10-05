@@ -177,7 +177,7 @@ Execute this code and output ONLY standard output (stdout) with no extra comment
                     memory: '38KB',
                     cpuTime: '0.02s',
                     isMockFallback: true,
-                    notice: 'Executed via Local Compiler Engine (Gemini 3.6 Flash fallback)'
+                    notice: 'Executed via Local Compiler Engine (Gemini AI fallback)'
                   }));
                 } catch (execErr) {
                   const errOutput = execErr.stdout || execErr.stderr || execErr.message;

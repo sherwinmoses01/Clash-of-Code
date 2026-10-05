@@ -1,7 +1,7 @@
 import { gameState, normalizePlayerLevel } from './data.js';
 import { sounds, spawnCrosshair } from './audio.js';
 import { initAuthUI } from './auth.js';
-import { generateCoachTip, isGeminiConfigured, GEMINI_MODEL } from './gemini.js';
+import { generateCoachTip, isGeminiConfigured } from './gemini.js';
 import {
   initModals,
   openClanModal,

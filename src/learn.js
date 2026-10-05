@@ -9,8 +9,7 @@ import {
   executeCodeWithGemini,
   getGeminiHint,
   explainCodeWithGemini,
-  isGeminiConfigured,
-  GEMINI_MODEL
+  isGeminiConfigured
 } from './gemini.js';
 import { addPlayerXp, addPlayerCodePoints, normalizePlayerLevel } from './data.js';
 import { initAuthUI } from './auth.js';
@@ -588,7 +587,7 @@ function initJDoodleScratchpad() {
         if (scratchpadConsoleOutput) {
           scratchpadConsoleOutput.innerHTML = `
             <div class="gemini-hint-box" style="background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.5); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
-              <div style="color: #C084FC; font-weight: bold; font-size: 0.82rem; margin-bottom: 4px;">💡 COACH ADA [AI • ${GEMINI_MODEL}]:</div>
+              <div style="color: #C084FC; font-weight: bold; font-size: 0.82rem; margin-bottom: 4px;">💡 COACH ADA [AI]:</div>
               <div style="color: #F1F5F9; font-size: 0.85rem; line-height: 1.45;">${escapeHtml(hint)}</div>
             </div>
           ` + scratchpadConsoleOutput.innerHTML;
@@ -620,7 +619,7 @@ function initJDoodleScratchpad() {
         if (scratchpadConsoleOutput) {
           scratchpadConsoleOutput.innerHTML = `
             <div class="gemini-explain-box" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
-              <div style="color: #38BDF8; font-weight: bold; font-size: 0.82rem; margin-bottom: 6px;">🧠 CODE ANALYSIS [AI • ${GEMINI_MODEL}]:</div>
+              <div style="color: #38BDF8; font-weight: bold; font-size: 0.82rem; margin-bottom: 6px;">🧠 CODE ANALYSIS [AI]:</div>
               <div style="color: #E2E8F0; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(analysis)}</div>
             </div>
           ` + scratchpadConsoleOutput.innerHTML;
@@ -643,12 +642,12 @@ function openJDoodleScratchpad(customTitle = null, customCode = null) {
 
   const titleEl = document.getElementById('scratchpad-title');
   if (titleEl) {
-    titleEl.textContent = customTitle || `GEMINI AI CODE COMPILER (${GEMINI_MODEL})`;
+    titleEl.textContent = customTitle || `GEMINI AI CODE COMPILER`;
   }
 
   if (scratchpadStatusPill) {
     if (isGeminiConfigured()) {
-      scratchpadStatusPill.innerHTML = `<span class="jdoodle-dot green-dot"></span> GEMINI 3.6 FLASH`;
+      scratchpadStatusPill.innerHTML = `<span class="jdoodle-dot green-dot"></span> GEMINI AI`;
       scratchpadStatusPill.className = 'jdoodle-live-pill pill-online';
     } else {
       scratchpadStatusPill.innerHTML = `<span class="jdoodle-dot yellow-dot"></span> GEMINI SANDBOX`;
@@ -665,9 +664,9 @@ function openJDoodleScratchpadForProblem(title, lcId) {
   const lang = scratchpadLangSelect ? scratchpadLangSelect.value : 'python3';
   let starter = '';
   if (lang === 'python3') {
-    starter = `# LeetCode #${lcId}: ${title}\n# Cloud-compiled via Google Gemini API (${GEMINI_MODEL})\n\ndef solution():\n    print("Executing solution for: ${title}")\n    return "PASSED"\n\n# Run demonstration\nres = solution()\nprint("Result:", res)\n`;
+    starter = `# LeetCode #${lcId}: ${title}\n# Cloud-compiled via Google Gemini AI\n\ndef solution():\n    print("Executing solution for: ${title}")\n    return "PASSED"\n\n# Run demonstration\nres = solution()\nprint("Result:", res)\n`;
   } else {
-    starter = `// LeetCode #${lcId}: ${title}\n// Cloud-compiled via Google Gemini API (${GEMINI_MODEL})\n\nfunction solution() {\n  console.log("Executing solution for: ${title}");\n  return "PASSED";\n}\n\n// Run demonstration\nconst res = solution();\nconsole.log("Result:", res);\n`;
+    starter = `// LeetCode #${lcId}: ${title}\n// Cloud-compiled via Google Gemini AI\n\nfunction solution() {\n  console.log("Executing solution for: ${title}");\n  return "PASSED";\n}\n\n// Run demonstration\nconst res = solution();\nconsole.log("Result:", res);\n`;
   }
   openJDoodleScratchpad(`LEETCODE #${lcId} WORKBENCH`, starter);
 }
@@ -685,7 +684,7 @@ async function runScratchpadCode() {
   const lang = scratchpadLangSelect ? scratchpadLangSelect.value : 'python3';
 
   if (scratchpadConsoleStatus) {
-    scratchpadConsoleStatus.textContent = `Compiling via Gemini AI (${GEMINI_MODEL})...`;
+    scratchpadConsoleStatus.textContent = `Compiling via Gemini AI Engine...`;
     scratchpadConsoleStatus.className = "console-status running";
   }
 
@@ -693,7 +692,7 @@ async function runScratchpadCode() {
     scratchpadConsoleOutput.innerHTML = `
       <div class="compiling-notice">
         <span class="pulse-radar-mini"></span>
-        <span>Transmitting script payload to <strong>Google Gemini API (${GEMINI_MODEL})</strong> (${lang})...</span>
+        <span>Transmitting script payload to <strong>Google Gemini AI</strong> (${lang})...</span>
       </div>
     `;
   }
@@ -711,7 +710,7 @@ async function runScratchpadCode() {
       <div class="jdoodle-result-header">
         <div class="jdoodle-brand">
           <span class="jdoodle-icon">⚡</span>
-          <strong>${res.isMockFallback ? 'GEMINI COMPILER (SANDBOX)' : 'GEMINI CLOUD COMPILER (' + GEMINI_MODEL + ')'}</strong>
+          <strong>${res.isMockFallback ? 'GEMINI COMPILER (SANDBOX)' : 'GEMINI CLOUD COMPILER'}</strong>
           <span class="jdoodle-status-tag ${res.success ? 'tag-pass' : 'tag-warn'}">STATUS: ${res.statusCode || 200}</span>
         </div>
         <div class="jdoodle-stats">

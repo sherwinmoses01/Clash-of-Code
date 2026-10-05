@@ -11,10 +11,7 @@ import { sounds } from './audio.js';
 import { generateRoomId } from './db.js';
 import {
   askCoachAda,
-  isGeminiConfigured,
-  GEMINI_MODEL,
-  getGeminiApiKey,
-  maskApiKey
+  isGeminiConfigured
 } from './gemini.js';
 
 let modalContainer = null;
@@ -1302,7 +1299,7 @@ export function openRankModal() {
             <li>🔓 Promotion Title: <strong>${nextTitle}</strong></li>
             <li>🪙 Level-Up Bonus: <strong>+150 Code Points</strong></li>
             <li>⚔️ Arena Access: <strong>High-ELO Queue &amp; Clan War Priority</strong></li>
-            <li>🧠 Coach Ada Perk: <strong>Advanced Gemini 3.6 Flash Neural Coaching</strong></li>
+            <li>🧠 Coach Ada Perk: <strong>Advanced Gemini Neural Coaching</strong></li>
           </ul>
         </div>
       </div>
@@ -1354,9 +1351,8 @@ export function openCoachAdaChatModal() {
       <div class="modal-title-wrap">
         <div class="coach-name-row">
           <h2 class="modal-title">COACH ADA AI</h2>
-          <span class="gemini-model-badge">${GEMINI_MODEL}</span>
         </div>
-        <span class="coach-status-sub">${isOnline ? '🟢 Live Neural Link Active' : '🟡 Offline Intelligence Active (Gemini Ready)'}</span>
+        <span class="coach-status-sub">${isOnline ? '🟢 Live Neural Link Active' : '🟡 Neural Link Active'}</span>
       </div>
     </div>
 
@@ -1374,7 +1370,7 @@ export function openCoachAdaChatModal() {
         <div class="coach-msg msg-ada">
           <div class="msg-bubble">
             <span class="msg-author">COACH ADA [AI]</span>
-            <p>Greetings, Pilot! I am Coach Ada, your Senior AI Algorithmic Mentor powered by Google Gemini (<code>${GEMINI_MODEL}</code>). Ask me any question about data structures, algorithmic complexity, duel tactics, or code bugs!</p>
+            <p>Greetings, Pilot! I am Coach Ada, your Senior AI Algorithmic Mentor. Ask me any question about data structures, algorithmic complexity, duel tactics, or code bugs!</p>
           </div>
         </div>
       </div>
@@ -1396,10 +1392,8 @@ export function openCoachAdaChatModal() {
 
       <!-- Footer Telemetry -->
       <div class="coach-footer-key-row">
-        <span>Engine: <strong>Google Gemini (${GEMINI_MODEL})</strong></span>
-        <button type="button" class="coach-key-setup-btn" id="btn-coach-api-key">
-          ${isOnline ? '🔑 Update Gemini Key' : '➕ Enter Gemini API Key'}
-        </button>
+        <span>Engine: <strong>AI Neural Link</strong></span>
+        <span class="coach-status-sub" style="color: #10B981; font-weight: 700;">CONNECTED</span>
       </div>
     </div>
   `;
@@ -1410,7 +1404,6 @@ export function openCoachAdaChatModal() {
   const chatInput = modalContainer.querySelector('#coach-chat-input');
   const sendBtn = modalContainer.querySelector('#btn-coach-send');
   const chipBtns = modalContainer.querySelectorAll('.coach-chip-btn');
-  const keyBtn = modalContainer.querySelector('#btn-coach-api-key');
 
   if (chatInput) chatInput.focus();
 
@@ -1459,7 +1452,7 @@ export function openCoachAdaChatModal() {
       adaMsgEl.className = 'coach-msg msg-ada';
       adaMsgEl.innerHTML = `
         <div class="msg-bubble">
-          <span class="msg-author">COACH ADA [AI • ${GEMINI_MODEL}]</span>
+          <span class="msg-author">COACH ADA [AI]</span>
           <div class="msg-content">${formatMarkdownResponse(reply)}</div>
         </div>
       `;
@@ -1473,7 +1466,7 @@ export function openCoachAdaChatModal() {
       adaMsgEl.className = 'coach-msg msg-ada';
       adaMsgEl.innerHTML = `
         <div class="msg-bubble">
-          <span class="msg-author">COACH ADA [AI • ${GEMINI_MODEL}]</span>
+          <span class="msg-author">COACH ADA [AI]</span>
           <div class="msg-content">${formatMarkdownResponse(fallbackReply)}</div>
         </div>
       `;
@@ -1495,96 +1488,5 @@ export function openCoachAdaChatModal() {
       handleSend(prompt);
     });
   });
-
-  if (keyBtn) {
-    keyBtn.addEventListener('click', () => {
-      openGeminiKeyModal(() => {
-        openCoachAdaChatModal();
-      });
-    });
-  }
-}
-
-/**
- * Secure Gemini API Key management modal.
- * Uses a password-masked field to ensure keys are NEVER displayed in plain text anywhere.
- */
-export function openGeminiKeyModal(onComplete) {
-  const isOnline = isGeminiConfigured();
-
-  const content = `
-    <div class="modal-header">
-      <div class="modal-title-wrap">
-        <span class="modal-badge-tag orange-tag">NEURAL LINK SECURITY</span>
-        <h2 class="modal-title">GEMINI API KEY CONFIGURATION</h2>
-      </div>
-    </div>
-    <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
-      <div class="gemini-key-status-card" style="padding: 16px; border-radius: 12px; background: ${isOnline ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)'}; border: 1px solid ${isOnline ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)'}; display: flex; align-items: center; gap: 14px;">
-        <div style="font-size: 1.8rem;">${isOnline ? '🔒' : '🔑'}</div>
-        <div>
-          <h4 style="margin: 0 0 4px 0; color: #FFFFFF; font-size: 0.95rem;">${isOnline ? 'Gemini API Key Active & Secured' : 'No Custom Gemini Key Configured'}</h4>
-          <p style="margin: 0; font-size: 0.8rem; color: #94A3B8;">${isOnline ? 'Your API key is active and securely hidden. To replace it with a new key, enter it below.' : 'Enter a Google Gemini API Key to activate Coach Ada live AI mentoring and compiler services.'}</p>
-        </div>
-      </div>
-
-      <div class="gemini-key-input-group" style="display: flex; flex-direction: column; gap: 8px;">
-        <label for="gemini-new-key-input" style="font-size: 0.8rem; font-weight: 700; color: var(--neon-cyan, #06B6D4); letter-spacing: 0.05em;">ENTER NEW API KEY</label>
-        <div style="position: relative; display: flex; align-items: center;">
-          <input 
-            type="password" 
-            id="gemini-new-key-input" 
-            placeholder="Paste new Gemini key here (masked for security)..." 
-            autocomplete="new-password"
-            style="width: 100%; padding: 12px 16px; background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(255,255,255,0.18); border-radius: 8px; color: #FFFFFF; font-family: monospace; font-size: 0.9rem;"
-          />
-        </div>
-        <span style="font-size: 0.75rem; color: #64748B;">For your security, keys are never displayed in plain text anywhere. Starts with <code>AIza...</code> or <code>AQ...</code></span>
-      </div>
-
-      <div class="gemini-key-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
-        ${isOnline ? `<button type="button" id="btn-gemini-clear-key" class="btn-ghost" style="padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.4); color: #EF4444; background: transparent; cursor: pointer; font-size: 0.8rem; font-weight: 700;">CLEAR KEY</button>` : ''}
-        <button type="button" id="btn-gemini-cancel-key" class="btn-secondary" style="padding: 10px 18px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); color: #E2E8F0; background: rgba(255,255,255,0.06); cursor: pointer; font-size: 0.8rem; font-weight: 700;">CANCEL</button>
-        <button type="button" id="btn-gemini-save-key" class="next-kata-btn" style="padding: 10px 22px; cursor: pointer;">SAVE & ACTIVATE ➔</button>
-      </div>
-    </div>
-  `;
-
-  openModal(content, 'gemini-key');
-
-  const saveBtn = modalContainer.querySelector('#btn-gemini-save-key');
-  const cancelBtn = modalContainer.querySelector('#btn-gemini-cancel-key');
-  const clearBtn = modalContainer.querySelector('#btn-gemini-clear-key');
-  const keyInput = modalContainer.querySelector('#gemini-new-key-input');
-
-  if (keyInput) keyInput.focus();
-
-  if (saveBtn && keyInput) {
-    saveBtn.addEventListener('click', () => {
-      const val = keyInput.value.trim();
-      if (val) {
-        localStorage.setItem('clashofcode_gemini_api_key', val);
-        sounds.playReward();
-      }
-      if (onComplete) onComplete();
-      else openCoachAdaChatModal();
-    });
-  }
-
-  if (cancelBtn) {
-    cancelBtn.addEventListener('click', () => {
-      if (onComplete) onComplete();
-      else openCoachAdaChatModal();
-    });
-  }
-
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      localStorage.removeItem('clashofcode_gemini_api_key');
-      sounds.playClick();
-      if (onComplete) onComplete();
-      else openCoachAdaChatModal();
-    });
-  }
 }
 

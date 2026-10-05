@@ -25,8 +25,7 @@ import {
 import {
   runProblemTestsWithGemini,
   getGeminiHint,
-  isGeminiConfigured,
-  GEMINI_MODEL
+  isGeminiConfigured
 } from './gemini.js';
 import { initAuthUI } from './auth.js';
 
@@ -542,7 +541,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         consoleOutput.innerHTML = `
           <div class="gemini-hint-box" style="background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.5); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 8px; color: #C084FC; font-weight: bold; font-size: 0.8rem; margin-bottom: 4px;">
-              <span>💡 COACH ADA [AI • ${GEMINI_MODEL}]:</span>
+              <span>💡 COACH ADA [AI]:</span>
             </div>
             <div style="color: #F1F5F9; line-height: 1.45; font-size: 0.84rem;">${escapeHtml(hint)}</div>
           </div>
@@ -1030,7 +1029,7 @@ function openChallengeModal(territory) {
   // Update Gemini Status Indicator
   if (jdoodleStatusPill) {
     if (isGeminiConfigured()) {
-      jdoodleStatusPill.innerHTML = `<span class="jdoodle-dot green-dot"></span> GEMINI 3.6 FLASH`;
+      jdoodleStatusPill.innerHTML = `<span class="jdoodle-dot green-dot"></span> GEMINI AI`;
       jdoodleStatusPill.className = 'jdoodle-live-pill pill-online';
     } else {
       jdoodleStatusPill.innerHTML = `<span class="jdoodle-dot yellow-dot"></span> GEMINI SANDBOX`;
@@ -1048,7 +1047,7 @@ function openChallengeModal(territory) {
 
   consoleStatus.textContent = "Awaiting execution";
   consoleStatus.className = "console-status";
-  consoleOutput.innerHTML = `Tactical challenge initialized for <strong>${territory.name}</strong>. Evaluated by <strong>Google Gemini API (${GEMINI_MODEL})</strong>. Click "Run Tests" to verify.`;
+  consoleOutput.innerHTML = `Tactical challenge initialized for <strong>${territory.name}</strong>. Evaluated by <strong>Google Gemini AI</strong>. Click "Run Tests" to verify.`;
 
   challengeOverlay.classList.add('active');
 }
@@ -1068,7 +1067,7 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;');
 }
 
-// Run test cases against user code via Gemini API (gemini-3.6-flash)
+// Run test cases against user code via Gemini API
 async function runCurrentTests() {
   if (!activeChallengeSector || !activeChallengeSector.problem) return false;
   sounds.playClick();
@@ -1077,12 +1076,12 @@ async function runCurrentTests() {
   const userCode = codeEditor.value;
   const lang = editorLangSelect ? editorLangSelect.value : 'nodejs';
 
-  consoleStatus.textContent = `Evaluating via Gemini AI (${GEMINI_MODEL})...`;
+  consoleStatus.textContent = `Evaluating via Gemini AI Engine...`;
   consoleStatus.className = "console-status running";
   consoleOutput.innerHTML = `
     <div class="compiling-notice">
       <span class="pulse-radar-mini"></span>
-      <span>Transmitting code payload to <strong>Google Gemini API (${GEMINI_MODEL})</strong> (${lang})...</span>
+      <span>Transmitting code payload to <strong>Google Gemini AI</strong> (${lang})...</span>
     </div>
   `;
 
@@ -1100,7 +1099,7 @@ async function runCurrentTests() {
       <div class="jdoodle-result-header">
         <div class="jdoodle-brand">
           <span class="jdoodle-icon">⚡</span>
-          <strong>${res.isMockFallback ? 'GEMINI ENGINE (SANDBOX)' : 'GEMINI CLOUD COMPILER (' + GEMINI_MODEL + ')'}</strong>
+          <strong>${res.isMockFallback ? 'GEMINI ENGINE (SANDBOX)' : 'GEMINI CLOUD COMPILER'}</strong>
           <span class="jdoodle-status-tag ${res.allPassed ? 'tag-pass' : 'tag-warn'}">STATUS: ${res.statusCode || 200}</span>
         </div>
         <div class="jdoodle-stats">
@@ -1142,7 +1141,7 @@ async function runCurrentTests() {
       sounds.playReward();
       consoleStatus.textContent = "VERIFIED BY GEMINI: ALL OUTPUTS CORRECT";
       consoleStatus.className = "console-status pass";
-      outputHtml += `<div class="test-summary-pass">✅ All ${prob.tests.length} tests verified correct by Gemini AI Judge (${GEMINI_MODEL})! Sector is ready to conquer.</div>`;
+      outputHtml += `<div class="test-summary-pass">✅ All ${prob.tests.length} tests verified correct by Gemini AI Judge! Sector is ready to conquer.</div>`;
       consoleOutput.innerHTML = outputHtml;
       return true;
     } else {

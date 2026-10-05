@@ -31,8 +31,8 @@ export function maskApiKey(text) {
 }
 
 /**
- * Dynamically resolves the Gemini API key from environment variables or localStorage.
- * Enables zero-reload key updates from the in-app settings.
+ * Dynamically resolves the Gemini API key strictly from environment variables (.env).
+ * Custom client-side key overrides have been removed for security and consistency.
  */
 export function getGeminiApiKey() {
   let envKey = '';
@@ -49,14 +49,15 @@ export function getGeminiApiKey() {
   if (envKey && !envKey.includes('your_') && envKey.length > 10) {
     return envKey;
   }
-  if (typeof localStorage !== 'undefined') {
-    const stored = (localStorage.getItem('clashofcode_gemini_api_key') || '').trim();
-    if (stored && !stored.includes('your_') && stored.length > 10) {
-      return stored;
-    }
-  }
-  return envKey;
+  return '';
 }
+
+// Purge any legacy client key stored in browser storage
+try {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('clashofcode_gemini_api_key');
+  }
+} catch (_) {}
 
 /**
  * Checks if a valid Gemini API key is configured.
@@ -210,16 +211,16 @@ RUNTIME_ERROR: <concise error message with line number if possible>
       success: !hasError,
       output: rawOutput,
       statusCode: hasError ? 400 : 200,
-      memory: '32KB (Gemini 3.6 Flash)',
+      memory: '32KB (Gemini AI)',
       cpuTime: '0.04s',
       isMockFallback: false,
       model: GEMINI_MODEL,
       error: hasError ? rawOutput.replace('RUNTIME_ERROR:', '').trim() : null
     };
   } catch (err) {
-    console.warn(`[Gemini Execution Error with ${GEMINI_MODEL}]`, err);
+    console.warn(`[Gemini Execution Error]`, err);
     const fallback = runLocalEvaluationFallback(script, language);
-    fallback.notice = `Gemini Cloud Engine (${GEMINI_MODEL}) notice: ${err.message} -> Evaluated via Local Engine`;
+    fallback.notice = `Gemini Cloud Engine notice: ${err.message} -> Evaluated via Local Engine`;
     return fallback;
   }
 }
@@ -305,7 +306,7 @@ If a runtime or syntax error occurs in a test case, set "passed": false and "res
         return {
           id: idx + 1,
           passed: false,
-          resultText: `✗ Test Case ${idx + 1}: Unverified by ${GEMINI_MODEL}`
+          resultText: `✗ Test Case ${idx + 1}: Unverified by Gemini AI Judge`
         };
       }
       if (match.passed) {
@@ -332,14 +333,14 @@ If a runtime or syntax error occurs in a test case, set "passed": false and "res
       output: testResults.map(t => t.resultText).join('\n'),
       rawOutput: raw,
       statusCode: 200,
-      memory: '38KB (Gemini 3.6 Flash)',
+      memory: '38KB (Gemini AI)',
       cpuTime: '0.04s',
       isMockFallback: false,
       model: GEMINI_MODEL,
       testResults
     };
   } catch (err) {
-    console.warn(`[Gemini Test Runner Fallback] Error with ${GEMINI_MODEL}:`, err);
+    console.warn(`[Gemini Test Runner Fallback]`, err);
     return runLocalTestFallback(userCode, problem, language);
   }
 }
@@ -585,7 +586,7 @@ function runLocalEvaluationFallback(script, language) {
       });
       return {
         success: true,
-        output: logs.join('\n') + `\n\n[⚡ Gemini Sandbox Mode - Add VITE_GEMINI_API_KEY to .env for live ${GEMINI_MODEL} AI compilation]`,
+        output: logs.join('\n') + `\n\n[⚡ Gemini Sandbox Mode - Add VITE_GEMINI_API_KEY to .env for live Gemini AI compilation]`,
         statusCode: 200,
         memory: '32KB (Local Sandbox)',
         cpuTime: '0.02s',
@@ -595,7 +596,7 @@ function runLocalEvaluationFallback(script, language) {
     }
     return {
       success: false,
-      output: `[Notice] Cloud compilation for Python 3 powered by ${GEMINI_MODEL}.\nPlease add VITE_GEMINI_API_KEY to .env to execute on cloud servers.`,
+      output: `[Notice] Cloud compilation for Python 3 powered by Gemini AI.\nPlease add VITE_GEMINI_API_KEY to .env to execute on cloud servers.`,
       statusCode: 200,
       memory: '32KB (Local)',
       cpuTime: '0.01s',
@@ -607,7 +608,7 @@ function runLocalEvaluationFallback(script, language) {
   if (language !== 'nodejs' && language !== 'javascript') {
     return {
       success: false,
-      output: `[Notice] Cloud compilation for ${language} powered by ${GEMINI_MODEL}.\nPlease add VITE_GEMINI_API_KEY to .env`,
+      output: `[Notice] Cloud compilation for ${language} powered by Gemini AI.\nPlease add VITE_GEMINI_API_KEY to .env`,
       statusCode: 200,
       memory: '32KB (Local)',
       cpuTime: '0.01s',
@@ -627,7 +628,7 @@ function runLocalEvaluationFallback(script, language) {
     runFn(customConsole);
     return {
       success: true,
-      output: (logs.join('\n') || 'Program completed with no output.') + `\n\n[⚡ Gemini Sandbox Mode - Model: ${GEMINI_MODEL}]`,
+      output: (logs.join('\n') || 'Program completed with no output.') + `\n\n[⚡ Gemini Sandbox Mode]`,
       statusCode: 200,
       memory: '38KB (Local Sandbox)',
       cpuTime: '0.02s',
@@ -653,11 +654,11 @@ function runLocalTestFallback(userCode, problem, language) {
     const testResults = problem.tests.map((_, idx) => ({
       id: idx + 1,
       passed: false,
-      resultText: `✗ Test Case ${idx + 1}: Gemini API key required for ${language} (${GEMINI_MODEL})`
+      resultText: `✗ Test Case ${idx + 1}: Gemini API key required for ${language}`
     }));
     return {
       allPassed: false,
-      output: `[Gemini Sandbox] Add VITE_GEMINI_API_KEY to .env to enable ${GEMINI_MODEL} AI compiler.`,
+      output: `[Gemini Sandbox] Add VITE_GEMINI_API_KEY to .env to enable Gemini AI compiler.`,
       rawOutput: '',
       statusCode: 200,
       memory: '~Local Sandbox',
