@@ -118,13 +118,13 @@
         </select>
       </div>
 
-      <!-- Expand / Collapse All & JDoodle Cloud Compiler -->
+      <!-- Expand / Collapse All & Gemini Cloud Compiler -->
       <div class="view-toggles-group">
         <button class="view-toggle-btn" id="btn-expand-all" title="Expand all roadmap steps">EXPAND ALL</button>
         <button class="view-toggle-btn" id="btn-collapse-all" title="Collapse all roadmap steps">COLLAPSE ALL</button>
-        <button class="view-toggle-btn jdoodle-launch-btn" id="btn-open-jdoodle" title="Launch JDoodle Cloud Compiler Workbench">
+        <button class="view-toggle-btn jdoodle-launch-btn" id="btn-open-jdoodle" title="Launch Gemini 3.6 Flash AI Compiler Workbench">
           <span class="jdoodle-icon">⚡</span>
-          <span>CLOUD COMPILER</span>
+          <span>GEMINI COMPILER</span>
         </button>
       </div>
     </div>
@@ -139,14 +139,14 @@
 
   </div>
 
-  <!-- ==================== JDOODLE CLOUD COMPILER MODAL ==================== -->
+  <!-- ==================== GEMINI AI CLOUD COMPILER MODAL ==================== -->
   <div id="jdoodle-modal-overlay" class="modal-overlay">
     <div class="modal-dialog challenge-dialog jdoodle-scratchpad-dialog" role="dialog" aria-modal="true">
       
       <div class="modal-header">
         <div class="modal-title-group">
           <span class="modal-badge-tag" id="scratchpad-badge">DSA WORKBENCH</span>
-          <h3 class="modal-main-title" id="scratchpad-title">JDOODLE CLOUD COMPILER</h3>
+          <h3 class="modal-main-title" id="scratchpad-title">GEMINI AI CODE COMPILER (gemini-3.6-flash)</h3>
         </div>
         <button class="modal-close-btn" id="btn-close-jdoodle-modal" title="Close Compiler">✕</button>
       </div>
@@ -160,8 +160,8 @@
                 <option value="python3" selected>Python 3 (v4)</option>
                 <option value="nodejs">JavaScript (NodeJS)</option>
               </select>
-              <span class="jdoodle-live-pill" id="scratchpad-status-pill" title="JDoodle API Cloud Compiler Connection">
-                <span class="jdoodle-dot"></span> JDOODLE API
+              <span class="jdoodle-live-pill" id="scratchpad-status-pill" title="Gemini AI Cloud Compiler Connection (gemini-3.6-flash)">
+                <span class="jdoodle-dot"></span> GEMINI 3.6 FLASH
               </span>
             </div>
             <div class="scratchpad-presets-group">
@@ -185,14 +185,20 @@
               <span class="console-status" id="scratchpad-console-status">Awaiting execution</span>
             </div>
             <div class="console-output" id="scratchpad-console-output">
-              Click "▶ COMPILE &amp; RUN" to execute code on JDoodle Cloud servers and view output.
+              Click "▶ COMPILE &amp; RUN" to execute code via Google Gemini API (gemini-3.6-flash) and view output.
             </div>
           </div>
 
           <!-- Action Row -->
           <div class="editor-actions-row">
-            <button class="action-test-btn" id="btn-scratchpad-run" style="flex: 1;">
-              <span>▶ COMPILE &amp; RUN (JDOODLE API)</span>
+            <button class="action-test-btn" id="btn-scratchpad-run" style="flex: 2;">
+              <span>▶ COMPILE &amp; RUN (GEMINI 3.6 FLASH)</span>
+            </button>
+            <button class="action-test-btn" id="btn-scratchpad-hint" style="flex: 1; background: rgba(139, 92, 246, 0.2); border-color: rgba(139, 92, 246, 0.6); color: #C084FC;" title="Ask Coach Ada for an AI Hint">
+              <span>💡 AI HINT</span>
+            </button>
+            <button class="action-test-btn" id="btn-scratchpad-explain" style="flex: 1; background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.5); color: #38BDF8;" title="Explain code complexity and logic via Gemini">
+              <span>🧠 EXPLAIN CODE</span>
             </button>
           </div>
         </div>

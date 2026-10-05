@@ -3,7 +3,14 @@
 // 7-Day Weekly Syndicate Raid with 5-Attempts Limit per Member
 // ==========================================================================
 
-import { gameState, saveState, resetClanWar } from './data.js';
+import {
+  gameState,
+  saveState,
+  resetClanWar,
+  addPlayerXp,
+  addPlayerCodePoints,
+  normalizePlayerLevel
+} from './data.js';
 import { sounds, spawnCrosshair } from './audio.js';
 import {
   initClanWarRoom,
@@ -16,10 +23,11 @@ import {
   applyStateInterpolation
 } from './db.js';
 import {
-  runProblemTestsWithJDoodle,
-  executeCodeWithJDoodle,
-  isJDoodleConfigured
-} from './jdoodle.js';
+  runProblemTestsWithGemini,
+  getGeminiHint,
+  isGeminiConfigured,
+  GEMINI_MODEL
+} from './gemini.js';
 import { initAuthUI } from './auth.js';
 
 // Multi-language template bank for Clan War JDoodle Cloud execution
@@ -518,6 +526,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (btnSubmit) btnSubmit.addEventListener('click', submitCurrentSolution);
   if (btnQuickSolve) btnQuickSolve.addEventListener('click', autoSolveCode);
 
+  // Coach Ada AI Hint via Gemini 3.6 Flash
+  const btnCoachHint = document.getElementById('btn-coach-hint');
+  if (btnCoachHint) {
+    btnCoachHint.addEventListener('click', async () => {
+      if (!activeChallengeSector || !activeChallengeSector.problem) return;
+      sounds.playClick();
+      btnCoachHint.disabled = true;
+      btnCoachHint.textContent = '⏳ THINKING...';
+      try {
+        const prob = activeChallengeSector.problem;
+        const lang = editorLangSelect ? editorLangSelect.value : 'nodejs';
+        const hint = await getGeminiHint(codeEditor.value, prob, lang);
+        sounds.playReward();
+        consoleOutput.innerHTML = `
+          <div class="gemini-hint-box" style="background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.5); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #C084FC; font-weight: bold; font-size: 0.8rem; margin-bottom: 4px;">
+              <span>💡 COACH ADA [AI • ${GEMINI_MODEL}]:</span>
+            </div>
+            <div style="color: #F1F5F9; line-height: 1.45; font-size: 0.84rem;">${escapeHtml(hint)}</div>
+          </div>
+        ` + consoleOutput.innerHTML;
+      } catch (err) {
+        consoleOutput.innerHTML = `<div class="test-fail">⚠️ AI Hint error: ${escapeHtml(err.message)}</div>` + consoleOutput.innerHTML;
+      } finally {
+        btnCoachHint.disabled = false;
+        btnCoachHint.textContent = '💡 AI HINT';
+      }
+    });
+  }
+
   // Compiler Language Switcher
   if (editorLangSelect) {
     editorLangSelect.addEventListener('change', () => {
@@ -989,13 +1027,13 @@ function openChallengeModal(territory) {
 
   chalConstraints.innerHTML = prob.constraints.map(c => `<li><code>${c}</code></li>`).join('');
 
-  // Update JDoodle Status Indicator
+  // Update Gemini Status Indicator
   if (jdoodleStatusPill) {
-    if (isJDoodleConfigured()) {
-      jdoodleStatusPill.innerHTML = '<span class="jdoodle-dot green-dot"></span> JDOODLE CLOUD';
+    if (isGeminiConfigured()) {
+      jdoodleStatusPill.innerHTML = `<span class="jdoodle-dot green-dot"></span> GEMINI 3.6 FLASH`;
       jdoodleStatusPill.className = 'jdoodle-live-pill pill-online';
     } else {
-      jdoodleStatusPill.innerHTML = '<span class="jdoodle-dot yellow-dot"></span> JDOODLE SANDBOX';
+      jdoodleStatusPill.innerHTML = `<span class="jdoodle-dot yellow-dot"></span> GEMINI SANDBOX`;
       jdoodleStatusPill.className = 'jdoodle-live-pill pill-sandbox';
     }
   }
@@ -1010,7 +1048,7 @@ function openChallengeModal(territory) {
 
   consoleStatus.textContent = "Awaiting execution";
   consoleStatus.className = "console-status";
-  consoleOutput.innerHTML = `Tactical challenge initialized for <strong>${territory.name}</strong>. Powered by <strong>JDoodle Compiler API</strong>. Click "Run Tests" to compile and execute.`;
+  consoleOutput.innerHTML = `Tactical challenge initialized for <strong>${territory.name}</strong>. Evaluated by <strong>Google Gemini API (${GEMINI_MODEL})</strong>. Click "Run Tests" to verify.`;
 
   challengeOverlay.classList.add('active');
 }
@@ -1030,7 +1068,7 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;');
 }
 
-// Run test cases against user code via JDoodle Compiler API
+// Run test cases against user code via Gemini API (gemini-3.6-flash)
 async function runCurrentTests() {
   if (!activeChallengeSector || !activeChallengeSector.problem) return false;
   sounds.playClick();
@@ -1039,17 +1077,17 @@ async function runCurrentTests() {
   const userCode = codeEditor.value;
   const lang = editorLangSelect ? editorLangSelect.value : 'nodejs';
 
-  consoleStatus.textContent = "Compiling via JDoodle API...";
+  consoleStatus.textContent = `Evaluating via Gemini AI (${GEMINI_MODEL})...`;
   consoleStatus.className = "console-status running";
   consoleOutput.innerHTML = `
     <div class="compiling-notice">
       <span class="pulse-radar-mini"></span>
-      <span>Transmitting code payload to <strong>JDoodle Cloud Compiler</strong> (${lang})...</span>
+      <span>Transmitting code payload to <strong>Google Gemini API (${GEMINI_MODEL})</strong> (${lang})...</span>
     </div>
   `;
 
   try {
-    const res = await runProblemTestsWithJDoodle({
+    const res = await runProblemTestsWithGemini({
       userCode,
       problem: prob,
       language: lang
@@ -1057,17 +1095,17 @@ async function runCurrentTests() {
 
     let outputHtml = '';
 
-    // 1. JDoodle API Execution Badge & Telemetry Bar
+    // 1. Gemini API Execution Badge & Telemetry Bar
     outputHtml += `
       <div class="jdoodle-result-header">
         <div class="jdoodle-brand">
           <span class="jdoodle-icon">⚡</span>
-          <strong>${res.isMockFallback ? 'JDOODLE COMPILER (VERIFIED)' : 'JDOODLE CLOUD COMPILER'}</strong>
+          <strong>${res.isMockFallback ? 'GEMINI ENGINE (SANDBOX)' : 'GEMINI CLOUD COMPILER (' + GEMINI_MODEL + ')'}</strong>
           <span class="jdoodle-status-tag ${res.allPassed ? 'tag-pass' : 'tag-warn'}">STATUS: ${res.statusCode || 200}</span>
         </div>
         <div class="jdoodle-stats">
-          <span>CPU: <strong>${res.cpuTime || '0.02s'}</strong></span>
-          <span>MEM: <strong>${res.memory || '36KB'}</strong></span>
+          <span>CPU: <strong>${res.cpuTime || '0.04s'}</strong></span>
+          <span>MEM: <strong>${res.memory || '38KB'}</strong></span>
         </div>
       </div>
     `;
@@ -1085,7 +1123,7 @@ async function runCurrentTests() {
     if (displayOutput) {
       outputHtml += `
         <div class="jdoodle-stdout-wrap">
-          <div class="jdoodle-stdout-title">CONSOLE OUTPUT (STDOUT):</div>
+          <div class="jdoodle-stdout-title">TEST VERIFICATION SUITE:</div>
           <pre class="jdoodle-stdout-box">${escapeHtml(displayOutput)}</pre>
         </div>
       `;
@@ -1102,9 +1140,9 @@ async function runCurrentTests() {
 
     if (res.allPassed) {
       sounds.playReward();
-      consoleStatus.textContent = "VERIFIED BY COMPILER: ALL OUTPUTS CORRECT";
+      consoleStatus.textContent = "VERIFIED BY GEMINI: ALL OUTPUTS CORRECT";
       consoleStatus.className = "console-status pass";
-      outputHtml += `<div class="test-summary-pass">✅ All ${prob.tests.length} tests verified correct by JDoodle Compiler! Sector is ready to conquer.</div>`;
+      outputHtml += `<div class="test-summary-pass">✅ All ${prob.tests.length} tests verified correct by Gemini AI Judge (${GEMINI_MODEL})! Sector is ready to conquer.</div>`;
       consoleOutput.innerHTML = outputHtml;
       return true;
     } else {
@@ -1161,7 +1199,9 @@ async function submitCurrentSolution() {
   saveState();
 
   sounds.playBattle();
-  showToast(`CONQUERED! ${sector.name} (${sector.code}) is now secured for BitKnights!`, "🎉");
+  showToast(`CONQUERED! ${sector.name} (${sector.code}) is now secured for BitKnights! (+30 XP, +100 CP)`, "🎉");
+  addPlayerXp(30);
+  addPlayerCodePoints(100);
 
   closeChallengeModal();
   renderWarMap();

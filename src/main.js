@@ -1,6 +1,7 @@
-import { gameState } from './data.js';
+import { gameState, normalizePlayerLevel } from './data.js';
 import { sounds, spawnCrosshair } from './audio.js';
 import { initAuthUI } from './auth.js';
+import { generateCoachTip, isGeminiConfigured, GEMINI_MODEL } from './gemini.js';
 import {
   initModals,
   openClanModal,
@@ -16,7 +17,8 @@ import {
   openRankedModal,
   openQuickModal,
   openPracticeModal,
-  openTutorialModal
+  openTutorialModal,
+  openCoachAdaChatModal
 } from './modals.js';
 
 // Screens
@@ -102,14 +104,15 @@ export function showHomeScreen() {
 
 // Update HUD Display
 export function updateHUD() {
+  normalizePlayerLevel();
   if (hudLevelVal) hudLevelVal.textContent = gameState.player.level;
   if (hudXpText) hudXpText.textContent = `${gameState.player.xp}/${gameState.player.maxXp}`;
   if (hudXpBar) {
-    const pct = Math.min(100, Math.round((gameState.player.xp / gameState.player.maxXp) * 100));
+    const pct = Math.min(100, Math.max(0, Math.round((gameState.player.xp / gameState.player.maxXp) * 100)));
     hudXpBar.style.width = `${pct}%`;
   }
-  if (hudCpVal) hudCpVal.textContent = gameState.player.codePoints.toLocaleString();
-  if (battleHudCp) battleHudCp.textContent = gameState.player.codePoints.toLocaleString();
+  if (hudCpVal) hudCpVal.textContent = (gameState.player.codePoints || 0).toLocaleString();
+  if (battleHudCp) battleHudCp.textContent = (gameState.player.codePoints || 0).toLocaleString();
 
   // Badges update
   const uncompletedMissions = gameState.missions.filter(m => !m.claimed).length;
@@ -126,9 +129,9 @@ export function updateHUD() {
 }
 
 
-// AI Coach Dynamic Dialogue
+// AI Coach Dynamic Dialogue (Enhanced with Gemini 3.6 Flash)
 let currentQuoteIdx = 0;
-function cycleCoachSpeech() {
+async function cycleCoachSpeech() {
   if (!coachText) return;
   currentQuoteIdx = (currentQuoteIdx + 1) % gameState.coach.quotes.length;
   coachText.style.opacity = '0';
@@ -136,8 +139,16 @@ function cycleCoachSpeech() {
   
   sounds.playClick();
 
+  let quote = gameState.coach.quotes[currentQuoteIdx];
+  if (isGeminiConfigured() && Math.random() > 0.4) {
+    try {
+      const aiTip = await generateCoachTip();
+      if (aiTip) quote = aiTip;
+    } catch {}
+  }
+
   setTimeout(() => {
-    coachText.textContent = `"${gameState.coach.quotes[currentQuoteIdx]}"`;
+    coachText.textContent = `"${quote}"`;
     coachText.style.opacity = '1';
     coachText.style.transform = 'translateY(0)';
   }, 180);
@@ -326,13 +337,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Coach Click
+  // Coach Ada Click -> Open Interactive AI Mentorship Chat Modal
   if (aiCoachTrigger) {
     aiCoachTrigger.addEventListener('click', (e) => {
       e.stopPropagation();
-      cycleCoachSpeech();
+      openCoachAdaChatModal();
     });
   }
+
+  // Press 'C' to open Coach Ada Chat
+  window.addEventListener('keydown', (e) => {
+    if ((e.key === 'c' || e.key === 'C') && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+      openCoachAdaChatModal();
+    }
+  });
 
   // Home Action Cards Click
   if (btnBattle) {

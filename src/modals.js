@@ -1,6 +1,20 @@
-import { gameState, saveState } from './data.js';
+import {
+  gameState,
+  saveState,
+  addPlayerXp,
+  addPlayerCodePoints,
+  normalizePlayerLevel,
+  getPlayerTitle,
+  getMaxXpForLevel
+} from './data.js';
 import { sounds } from './audio.js';
 import { generateRoomId } from './db.js';
+import {
+  askCoachAda,
+  isGeminiConfigured,
+  GEMINI_MODEL,
+  getGeminiApiKey
+} from './gemini.js';
 
 let modalContainer = null;
 let currentOpenModal = null;
@@ -196,8 +210,8 @@ export function openQuickModal() {
             </div>
           `;
           setTimeout(() => {
-            gameState.player.codePoints += 180;
-            gameState.player.xp += 25;
+            addPlayerCodePoints(180);
+            addPlayerXp(25);
             if (updateHudCallback) updateHudCallback();
             closeModal();
           }, 2600);
@@ -262,8 +276,8 @@ export function openTutorialModal() {
   if (completeBtn) {
     completeBtn.addEventListener('click', () => {
       sounds.playReward();
-      gameState.player.codePoints += 200;
-      gameState.player.xp += 50;
+      addPlayerCodePoints(200);
+      addPlayerXp(50);
       if (updateHudCallback) updateHudCallback();
       closeModal();
     });
@@ -897,8 +911,8 @@ export function openTrainModal() {
           <h4>🎯 EXCELLENT STRIKE! (+100 CP, +20 XP)</h4>
           <p>${q.explanation}</p>
         `;
-        gameState.player.codePoints += 100;
-        gameState.player.xp += 20;
+        addPlayerCodePoints(100);
+        addPlayerXp(20);
 
         const m = gameState.missions.find(m => m.id === 'm1');
         if (m) { m.completed = true; m.progress = 1; }
@@ -1024,8 +1038,8 @@ export function openMissionsModal() {
       const mission = gameState.missions.find(m => m.id === id);
       mission.claimed = true;
       sounds.playReward();
-      gameState.player.codePoints += 200;
-      gameState.player.xp += 25;
+      addPlayerCodePoints(200);
+      addPlayerXp(25);
       if (updateHudCallback) updateHudCallback();
       openMissionsModal();
     });
@@ -1196,38 +1210,48 @@ export function openSubmenuModal() {
 
 // 13. LEVEL PROGRESSION MODAL
 export function openRankModal() {
+  normalizePlayerLevel();
+  const currentLvl = gameState.player.level || 0;
+  const nextLvl = currentLvl + 1;
+  const currentXp = gameState.player.xp || 0;
+  const maxXp = gameState.player.maxXp || getMaxXpForLevel(currentLvl);
+  const pct = Math.min(100, Math.max(0, Math.round((currentXp / maxXp) * 100)));
+  const title = gameState.player.title || getPlayerTitle(currentLvl);
+  const nextTitle = getPlayerTitle(nextLvl);
+
   const content = `
     <div class="modal-header rank-header">
       <div class="modal-title-wrap">
-        <span class="modal-badge-tag">MASTERY TIER</span>
+        <span class="modal-badge-tag cyan-tag">MASTERY TIER</span>
         <h2 class="modal-title">LEVEL PROGRESSION</h2>
       </div>
       <div class="header-stat">
         <span>Current Tier</span>
-        <strong style="color: #A78BFA">LEVEL ${gameState.player.level}</strong>
+        <strong style="color: #A78BFA">LEVEL ${currentLvl}</strong>
       </div>
     </div>
     <div class="modal-body">
       <div class="rank-modal-content">
         <div class="rank-large-badge">
-          <span class="rank-num">${gameState.player.level}</span>
-          <span class="rank-tier-name">${gameState.player.title}</span>
+          <span class="rank-num">${currentLvl}</span>
+          <span class="rank-tier-name">${title}</span>
         </div>
         <div class="rank-bar-wrap">
           <div class="rank-bar-label">
-            <span>Current EXP: ${gameState.player.xp} / ${gameState.player.maxXp} XP</span>
-            <span>${Math.round((gameState.player.xp / gameState.player.maxXp) * 100)}%</span>
+            <span>Current EXP: <strong>${currentXp} / ${maxXp} XP</strong></span>
+            <span style="color: #38BDF8; font-weight: bold;">${pct}%</span>
           </div>
           <div class="rank-progress-track">
-            <div class="rank-progress-fill" style="width: ${(gameState.player.xp / gameState.player.maxXp) * 100}%"></div>
+            <div class="rank-progress-fill" style="width: ${pct}%"></div>
           </div>
         </div>
         <div class="rank-unlocks-box">
-          <h4>UPCOMING REWARDS AT LEVEL 9:</h4>
+          <h4>UPCOMING REWARDS AT LEVEL ${nextLvl} (${nextTitle}):</h4>
           <ul>
-            <li>🔓 Unlocks: <strong>Quantum Computing & Dynamic Programming Master Decks</strong></li>
-            <li>🪙 Bonus: <strong>+1,000 Code Points</strong></li>
-            <li>🎨 Unlocks: <strong>Holographic Golden Visor for Coach Ada</strong></li>
+            <li>🔓 Promotion Title: <strong>${nextTitle}</strong></li>
+            <li>🪙 Level-Up Bonus: <strong>+150 Code Points</strong></li>
+            <li>⚔️ Arena Access: <strong>High-ELO Queue &amp; Clan War Priority</strong></li>
+            <li>🧠 Coach Ada Perk: <strong>Advanced Gemini 3.6 Flash Neural Coaching</strong></li>
           </ul>
         </div>
       </div>
@@ -1236,3 +1260,200 @@ export function openRankModal() {
 
   openModal(content, 'rank');
 }
+
+// ==============================================================================
+// 14. COACH ADA INTERACTIVE AI CHAT MODAL (Powered by gemini-3.6-flash)
+// ==============================================================================
+let coachChatHistory = [];
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function formatMarkdownResponse(text) {
+  if (!text) return '';
+  let out = escapeHtml(text);
+  // Code blocks: ```lang ... ```
+  out = out.replace(/```(?:([a-zA-Z0-9_-]+))?\n([\s\S]*?)```/g, (_, lang, code) => {
+    return `<pre class="ada-code-block"><code class="lang-${lang || 'code'}">${code.trim()}</code></pre>`;
+  });
+  // Inline code: `code`
+  out = out.replace(/`([^`]+)`/g, '<code class="ada-inline-code">$1</code>');
+  // Bold: **text**
+  out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // Italics: *text*
+  out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  // Linebreaks
+  return out.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br/>')}</p>`).join('');
+}
+
+export function openCoachAdaChatModal() {
+  const isOnline = isGeminiConfigured();
+  const apiKey = getGeminiApiKey();
+
+  const content = `
+    <div class="modal-header coach-chat-header">
+      <div class="coach-avatar-thumb">
+        <img src="/assets/ai_coach.jpg" alt="Coach Ada Avatar" class="coach-avatar-pic">
+        <span class="coach-online-dot ${isOnline ? 'green' : 'yellow'}"></span>
+      </div>
+      <div class="modal-title-wrap">
+        <div class="coach-name-row">
+          <h2 class="modal-title">COACH ADA AI</h2>
+          <span class="gemini-model-badge">${GEMINI_MODEL}</span>
+        </div>
+        <span class="coach-status-sub">${isOnline ? '🟢 Live Neural Link Active' : '🟡 Sandbox Mode (Add Gemini API Key in .env)'}</span>
+      </div>
+    </div>
+
+    <div class="modal-body coach-chat-body">
+      <!-- Quick Prompt Chips -->
+      <div class="coach-chips-row">
+        <button class="coach-chip-btn" data-prompt="How do I solve Two-Sum with a Hash Map in O(n)?">⚡ Two-Sum O(N)</button>
+        <button class="coach-chip-btn" data-prompt="Explain the difference between Dijkstra and Bellman-Ford algorithms.">🗺️ Dijkstra vs Bellman-Ford</button>
+        <button class="coach-chip-btn" data-prompt="Give me a tactical strategy for winning Ranked Territory Conquest duels.">⚔️ Territory Conquest Tactics</button>
+        <button class="coach-chip-btn" data-prompt="How do I spot Dynamic Programming subproblems?">🧩 Dynamic Programming Tips</button>
+      </div>
+
+      <!-- Messages Scroll Area -->
+      <div class="coach-messages-area" id="coach-messages-area">
+        <div class="coach-msg msg-ada">
+          <div class="msg-bubble">
+            <span class="msg-author">COACH ADA [AI]</span>
+            <p>Greetings, Pilot! I am Coach Ada, your Senior AI Algorithmic Mentor powered by Google Gemini (<code>${GEMINI_MODEL}</code>). Ask me any question about data structures, algorithmic complexity, duel tactics, or code bugs!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Controls -->
+      <div class="coach-input-wrap">
+        <input 
+          type="text" 
+          id="coach-chat-input" 
+          class="coach-chat-input" 
+          placeholder="Ask Coach Ada about algorithms, data structures, or code..." 
+          autocomplete="off"
+        />
+        <button type="button" class="coach-send-btn" id="btn-coach-send" title="Send message to Coach Ada">
+          <span>SEND</span>
+          <span class="send-icon">▲</span>
+        </button>
+      </div>
+
+      <!-- Footer Telemetry -->
+      <div class="coach-footer-key-row">
+        <span>Engine: <strong>Google Gemini (${GEMINI_MODEL})</strong></span>
+        <button type="button" class="coach-key-setup-btn" id="btn-coach-api-key">
+          ${apiKey ? '🔑 Update Gemini Key' : '➕ Enter Gemini API Key'}
+        </button>
+      </div>
+    </div>
+  `;
+
+  openModal(content, 'coach-chat');
+
+  const messagesArea = modalContainer.querySelector('#coach-messages-area');
+  const chatInput = modalContainer.querySelector('#coach-chat-input');
+  const sendBtn = modalContainer.querySelector('#btn-coach-send');
+  const chipBtns = modalContainer.querySelectorAll('.coach-chip-btn');
+  const keyBtn = modalContainer.querySelector('#btn-coach-api-key');
+
+  if (chatInput) chatInput.focus();
+
+  const handleSend = async (userText) => {
+    const text = (userText || chatInput?.value || '').trim();
+    if (!text) return;
+    if (chatInput) chatInput.value = '';
+
+    sounds.playClick();
+
+    // User message element
+    const userMsgEl = document.createElement('div');
+    userMsgEl.className = 'coach-msg msg-user';
+    userMsgEl.innerHTML = `
+      <div class="msg-bubble">
+        <span class="msg-author">PILOT (${escapeHtml(gameState.player.name)})</span>
+        <p>${escapeHtml(text)}</p>
+      </div>
+    `;
+    messagesArea.appendChild(userMsgEl);
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+
+    // Typing element
+    const typingEl = document.createElement('div');
+    typingEl.className = 'coach-msg msg-ada typing';
+    typingEl.innerHTML = `
+      <div class="msg-bubble">
+        <span class="msg-author">COACH ADA [AI]</span>
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    `;
+    messagesArea.appendChild(typingEl);
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+
+    coachChatHistory.push({ role: 'user', text });
+
+    try {
+      const reply = await askCoachAda(text, coachChatHistory);
+      typingEl.remove();
+
+      coachChatHistory.push({ role: 'model', text: reply });
+
+      const adaMsgEl = document.createElement('div');
+      adaMsgEl.className = 'coach-msg msg-ada';
+      adaMsgEl.innerHTML = `
+        <div class="msg-bubble">
+          <span class="msg-author">COACH ADA [AI • ${GEMINI_MODEL}]</span>
+          <div class="msg-content">${formatMarkdownResponse(reply)}</div>
+        </div>
+      `;
+      messagesArea.appendChild(adaMsgEl);
+      sounds.playReward();
+    } catch (err) {
+      typingEl.remove();
+      const errEl = document.createElement('div');
+      errEl.className = 'coach-msg msg-ada';
+      errEl.innerHTML = `
+        <div class="msg-bubble error">
+          <span class="msg-author">COACH ADA [TELEMETRY NOTICE]</span>
+          <p>⚠️ ${escapeHtml(err.message)}</p>
+        </div>
+      `;
+      messagesArea.appendChild(errEl);
+    }
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+  };
+
+  if (sendBtn) sendBtn.addEventListener('click', () => handleSend());
+  if (chatInput) {
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleSend();
+    });
+  }
+
+  chipBtns.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const prompt = chip.getAttribute('data-prompt');
+      handleSend(prompt);
+    });
+  });
+
+  if (keyBtn) {
+    keyBtn.addEventListener('click', () => {
+      const cur = getGeminiApiKey();
+      const entered = prompt('Enter Google Gemini API Key (starts with AIza...):', cur);
+      if (entered !== null) {
+        localStorage.setItem('clashofcode_gemini_api_key', entered.trim());
+        sounds.playReward();
+        openCoachAdaChatModal();
+      }
+    });
+  }
+}
+

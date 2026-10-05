@@ -232,17 +232,23 @@ class SoundEngine {
       console.warn('Audio error:', e);
     }
   }
+
+  // Celebratory Level-Up Fanfare
+  playLevelUp() {
+    this._playTones([
+      { freq: 440.00, delay: 0.00, duration: 0.14, gainVal: 0.12, type: 'triangle' }, // A4
+      { freq: 554.37, delay: 0.12, duration: 0.14, gainVal: 0.13, type: 'triangle' }, // C#5
+      { freq: 659.25, delay: 0.24, duration: 0.16, gainVal: 0.15, type: 'triangle' }, // E5
+      { freq: 880.00, delay: 0.38, duration: 0.40, gainVal: 0.18, type: 'square' },   // A5
+      { freq: 1108.73, delay: 0.52, duration: 0.60, gainVal: 0.20, type: 'triangle' } // C#6
+    ]);
+  }
 }
 
 export const sounds = new SoundEngine();
 
 /**
  * Shared tactical crosshair effect — spawns a brief animated burst at (x, y).
- * @param {number} x - clientX coordinate
- * @param {number} y - clientY coordinate
- * @param {SoundEngine} soundEngine - the sounds instance to play SFX
- * @param {HTMLElement|null} container - the #crosshair-container element
- * @param {boolean} [showCoords=false] - whether to show LOC coordinates label
  */
 export function spawnCrosshair(x, y, soundEngine, container, showCoords = false) {
   if (!container) return;
@@ -262,4 +268,74 @@ export function spawnCrosshair(x, y, soundEngine, container, showCoords = false)
 
   container.appendChild(burst);
   setTimeout(() => burst.remove(), 550);
+}
+
+/**
+ * Global Celebratory Level-Up Overlay Dialog
+ */
+export function showLevelUpCelebration(newLevel, title = 'Syntax Master', bonusCp = 150) {
+  sounds.playLevelUp();
+
+  // Remove any existing levelup modal
+  const existing = document.getElementById('clash-levelup-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'clash-levelup-overlay';
+  overlay.className = 'levelup-overlay active';
+  overlay.innerHTML = `
+    <div class="levelup-dialog" role="dialog" aria-modal="true">
+      <div class="levelup-sparkles"></div>
+      <div class="levelup-glow-ring"></div>
+      
+      <div class="levelup-header">
+        <span class="levelup-badge-pill">MASTERY PROMOTION</span>
+        <h2 class="levelup-headline">LEVEL UP!</h2>
+      </div>
+
+      <div class="levelup-rank-disc">
+        <span class="levelup-tier-text">TIER PROMOTED</span>
+        <span class="levelup-level-num">${newLevel}</span>
+        <span class="levelup-title-tag">${title}</span>
+      </div>
+
+      <p class="levelup-congrats">
+        Outstanding performance, Pilot! Your algorithmic synaptic latency has evolved to a higher tier.
+      </p>
+
+      <div class="levelup-reward-capsule">
+        <span class="reward-lbl">LEVEL PROMOTION BONUS:</span>
+        <strong class="reward-val">+${bonusCp} CP REWARDED</strong>
+      </div>
+
+      <button type="button" class="levelup-btn" id="btn-close-levelup">
+        <span>⚡ CLAIM REWARD &amp; RETURN TO BATTLE</span>
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const closeBtn = overlay.querySelector('#btn-close-levelup');
+  const close = () => {
+    sounds.playReward();
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.remove(), 300);
+  };
+
+  if (closeBtn) closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+}
+
+// Global Event Listener for Level Up Across ALL Pages
+if (typeof window !== 'undefined') {
+  window.addEventListener('clashofcode:levelup', (e) => {
+    const detail = e.detail || {};
+    const newLvl = detail.newLevel ?? 1;
+    const title = detail.title || 'Syntax Sentinel';
+    const bonusCp = detail.bonusCp || 150;
+    showLevelUpCelebration(newLvl, title, bonusCp);
+  });
 }

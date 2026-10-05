@@ -11,8 +11,72 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       {
-        name: 'jdoodle-proxy-middleware',
+        name: 'gemini-and-compiler-proxy-middleware',
         configureServer(server) {
+          // 1. Google Gemini API Dev Proxy (Strict Model: gemini-3.6-flash)
+          server.middlewares.use('/api/gemini/generate', (req, res) => {
+            if (req.method !== 'POST') {
+              res.statusCode = 405;
+              res.end('Method Not Allowed');
+              return;
+            }
+
+            let body = '';
+            req.on('data', chunk => { body += chunk; });
+            req.on('end', async () => {
+              try {
+                const parsed = JSON.parse(body || '{}');
+                const rawKey = parsed.apiKey || env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || '';
+                const apiKey = String(rawKey).replace(/^["']|["']$/g, '').trim();
+                const model = 'gemini-3.6-flash';
+                const prompt = parsed.prompt || '';
+                const systemInstruction = parsed.systemInstruction || '';
+
+                if (!apiKey || apiKey.includes('your_')) {
+                  res.statusCode = 400;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ error: 'Gemini API key is missing or invalid in .env' }));
+                  return;
+                }
+
+                const contents = [];
+                if (systemInstruction) {
+                  contents.push({ role: 'user', parts: [{ text: `SYSTEM: ${systemInstruction}` }] });
+                  contents.push({ role: 'model', parts: [{ text: 'Understood. I will strictly follow these instructions.' }] });
+                }
+                contents.push({ role: 'user', parts: [{ text: prompt }] });
+
+                const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                const response = await fetch(targetUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    contents,
+                    generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
+                  })
+                });
+
+                if (!response.ok) {
+                  const errText = await response.text();
+                  res.statusCode = response.status;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ error: `Gemini API error ${response.status}: ${errText}` }));
+                  return;
+                }
+
+                const data = await response.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ text, model }));
+              } catch (err) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: err.message }));
+              }
+            });
+          });
+
+          // 2. Legacy / Compatibility Code Execution Endpoint
           server.middlewares.use('/api/jdoodle/execute', (req, res) => {
             if (req.method !== 'POST') {
               res.statusCode = 405;
@@ -28,48 +92,48 @@ export default defineConfig(({ mode }) => {
             req.on('end', async () => {
               try {
                 const parsed = JSON.parse(body || '{}');
-                const rawId = parsed.clientId || env.VITE_JDOODLE_CLIENT_ID || env.JDOODLE_CLIENT_ID || '';
-                const rawSec = parsed.clientSecret || env.VITE_JDOODLE_CLIENT_SECRET || env.JDOODLE_CLIENT_SECRET || '';
-                const clientId = String(rawId).replace(/^["']|["']$/g, '');
-                const clientSecret = String(rawSec).replace(/^["']|["']$/g, '');
-                const targetUrl = (env.VITE_JDOODLE_API_URL || 'https://api.jdoodle.com/v1/execute').replace(/^["']|["']$/g, '');
                 const script = parsed.script || '';
                 const language = parsed.language || 'nodejs';
                 const stdin = parsed.stdin || '';
+                const geminiKey = (env.VITE_GEMINI_API_KEY || '').replace(/^["']|["']$/g, '').trim();
 
-                let cloudResult = null;
-                // 1. Try JDoodle Cloud API if keys are provided
-                if (clientId && clientSecret && !clientId.includes('your_')) {
+                // If Gemini key is set, evaluate via Gemini 3.6 Flash
+                if (geminiKey && !geminiKey.includes('your_') && geminiKey.length > 15) {
                   try {
-                    const response = await fetch(targetUrl, {
+                    const prompt = `You are a real-time code compiler and runtime engine. Language: ${language}.
+${stdin ? `Standard Input (stdin):\n${stdin}\n` : ''}
+Code:
+\`\`\`${language.includes('py') ? 'python' : 'javascript'}
+${script}
+\`\`\`
+Execute this code and output ONLY standard output (stdout) with no extra commentary or markdown:`;
+                    const gRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
-                        clientId,
-                        clientSecret,
-                        script,
-                        language,
-                        versionIndex: parsed.versionIndex || '4',
-                        stdin
+                        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 0.0, maxOutputTokens: 2048 }
                       })
                     });
-                    cloudResult = await response.json();
-                  } catch (netErr) {
-                    console.warn('[JDoodle Cloud Fetch Warning]:', netErr.message);
+                    if (gRes.ok) {
+                      const gData = await gRes.json();
+                      const out = gData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                      res.setHeader('Content-Type', 'application/json');
+                      res.end(JSON.stringify({
+                        output: out.trim(),
+                        statusCode: 200,
+                        memory: '32KB (Gemini 3.6 Flash)',
+                        cpuTime: '0.04s',
+                        isMockFallback: false
+                      }));
+                      return;
+                    }
+                  } catch (gErr) {
+                    console.warn('[Gemini 3.6 Flash Compiler Proxy Warning]:', gErr.message);
                   }
                 }
 
-                // 2. If JDoodle Cloud succeeded (200) and no daily limit error, return cloud output
-                if (cloudResult && cloudResult.statusCode === 200 && !cloudResult.error) {
-                  res.setHeader('Content-Type', 'application/json');
-                  res.end(JSON.stringify(cloudResult));
-                  return;
-                }
-
-                // 3. Fallback: If JDoodle daily limit is reached (429), or network error, execute locally via system node/python
-                const isLimit = cloudResult && (cloudResult.statusCode === 429 || (cloudResult.error && cloudResult.error.toLowerCase().includes('daily limit')));
-                console.info(`[JDoodle Compiler] ${isLimit ? 'Daily limit reached on cloud' : 'Cloud offline'}: Compiling ${language} via local system engine...`);
-
+                // Fallback to local system execution
                 const tmpExt = (language === 'python3' || language === 'python') ? '.py' : '.js';
                 const tmpFile = path.join(os.tmpdir(), `coc_eval_${Date.now()}_${Math.random().toString(36).slice(2)}${tmpExt}`);
 
@@ -92,12 +156,9 @@ export default defineConfig(({ mode }) => {
                     memory: '38KB',
                     cpuTime: '0.02s',
                     isMockFallback: true,
-                    notice: isLimit
-                      ? 'JDoodle Cloud Daily Limit Reached (429) -> Executed & Verified via Local System Compiler'
-                      : 'Verified via Local Compiler Engine'
+                    notice: 'Executed via Local Compiler Engine (Gemini 3.6 Flash fallback)'
                   }));
                 } catch (execErr) {
-                  // User's code threw syntax error or runtime error
                   const errOutput = execErr.stdout || execErr.stderr || execErr.message;
                   res.setHeader('Content-Type', 'application/json');
                   res.end(JSON.stringify({

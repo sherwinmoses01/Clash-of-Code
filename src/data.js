@@ -338,6 +338,7 @@ export function onGameStateSaved(callback) {
 
 // Persistence helpers for multi-page synchronization (Hub <-> Clan Page <-> War Page)
 export function saveState() {
+  if (typeof localStorage === 'undefined') return;
   try {
     const dataToSave = {
       player: gameState.player,
@@ -355,6 +356,7 @@ export function saveState() {
 
 /** Wipes the persisted game state from localStorage (called on sign-out or new account). */
 export function clearState() {
+  if (typeof localStorage === 'undefined') return;
   try {
     localStorage.removeItem('clashofcode_game_state');
     // Reset in-memory to clean defaults
@@ -369,6 +371,124 @@ export function clearState() {
   } catch (e) {
     console.warn('Could not clear localStorage', e);
   }
+}
+
+export function getMaxXpForLevel(level) {
+  const lvl = Math.max(0, parseInt(level, 10) || 0);
+  return 100 + lvl * 50;
+}
+
+export function getPlayerTitle(level) {
+  const lvl = Math.max(0, parseInt(level, 10) || 0);
+  if (lvl === 0) return 'Syntax Initiate';
+  if (lvl <= 2) return 'Byte Brawler';
+  if (lvl <= 4) return 'Logic Apprentice';
+  if (lvl <= 6) return 'Algo Striker';
+  if (lvl <= 8) return 'Syntax Sentinel';
+  if (lvl <= 10) return 'Cyber Sensei';
+  if (lvl <= 14) return 'Quantum Grandmaster';
+  return 'Arch-Architect Prime';
+}
+
+export function triggerLevelUpNotification(oldLevel, newLevel) {
+  if (typeof window === 'undefined') return;
+  const detail = {
+    oldLevel,
+    newLevel,
+    title: getPlayerTitle(newLevel),
+    bonusCp: (newLevel - oldLevel) * 150
+  };
+  window.dispatchEvent(new CustomEvent('clashofcode:levelup', { detail }));
+}
+
+/**
+ * Normalizes player level and XP, ensuring no unallocated overflow XP exists.
+ */
+export function normalizePlayerLevel() {
+  if (typeof gameState.player.level !== 'number' || isNaN(gameState.player.level)) {
+    gameState.player.level = 0;
+  }
+  if (typeof gameState.player.xp !== 'number' || isNaN(gameState.player.xp)) {
+    gameState.player.xp = 0;
+  }
+
+  let maxXp = getMaxXpForLevel(gameState.player.level);
+  let leveledUp = false;
+  const oldLevel = gameState.player.level;
+
+  while (gameState.player.xp >= maxXp) {
+    gameState.player.xp -= maxXp;
+    gameState.player.level += 1;
+    maxXp = getMaxXpForLevel(gameState.player.level);
+    leveledUp = true;
+  }
+
+  gameState.player.maxXp = maxXp;
+  gameState.player.title = getPlayerTitle(gameState.player.level);
+
+  if (leveledUp) {
+    saveState();
+    triggerLevelUpNotification(oldLevel, gameState.player.level);
+  }
+
+  return { leveledUp, level: gameState.player.level, xp: gameState.player.xp, maxXp };
+}
+
+/**
+ * Safely adds XP to player, recalculating levels and triggering level up celebrations.
+ */
+export function addPlayerXp(amount) {
+  const xpToAdd = Math.max(0, parseInt(amount, 10) || 0);
+  if (xpToAdd === 0) {
+    return { leveledUp: false, oldLevel: gameState.player.level, newLevel: gameState.player.level, xpGained: 0 };
+  }
+
+  const oldLevel = gameState.player.level || 0;
+  gameState.player.xp = (gameState.player.xp || 0) + xpToAdd;
+
+  let leveledUp = false;
+  let maxXp = getMaxXpForLevel(gameState.player.level);
+
+  while (gameState.player.xp >= maxXp) {
+    gameState.player.xp -= maxXp;
+    gameState.player.level += 1;
+    maxXp = getMaxXpForLevel(gameState.player.level);
+    leveledUp = true;
+  }
+
+  gameState.player.maxXp = maxXp;
+  gameState.player.title = getPlayerTitle(gameState.player.level);
+
+  if (leveledUp) {
+    const bonusCp = (gameState.player.level - oldLevel) * 150;
+    gameState.player.codePoints = (gameState.player.codePoints || 0) + bonusCp;
+  }
+
+  saveState();
+
+  if (leveledUp) {
+    triggerLevelUpNotification(oldLevel, gameState.player.level);
+  }
+
+  return {
+    leveledUp,
+    oldLevel,
+    newLevel: gameState.player.level,
+    xpGained: xpToAdd,
+    title: gameState.player.title,
+    currentXp: gameState.player.xp,
+    maxXp: gameState.player.maxXp
+  };
+}
+
+/**
+ * Safely adds Code Points (currency) to player.
+ */
+export function addPlayerCodePoints(amount) {
+  const cp = parseInt(amount, 10) || 0;
+  gameState.player.codePoints = Math.max(0, (gameState.player.codePoints || 0) + cp);
+  saveState();
+  return gameState.player.codePoints;
 }
 
 export function loadState() {
@@ -386,6 +506,7 @@ export function loadState() {
         Object.assign(gameState.clanWar, parsed.clanWar);
       }
     }
+    normalizePlayerLevel();
   } catch (e) {
     console.warn('Could not load from localStorage', e);
   }
@@ -407,8 +528,4 @@ export function resetClanWar() {
   gameState.clanWar.territories = [];
   saveState();
 }
-
-// NOTE: loadState() is intentionally NOT called here automatically.
-// Auth (auth.js) controls when player data is loaded — only after a valid
-// session is confirmed. This prevents stale localStorage from polluting new accounts.
 

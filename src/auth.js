@@ -7,11 +7,62 @@
 // ==============================================================================
 
 import { supabase, isSupabaseConfigured } from './supabase.js';
-import { gameState, saveState, loadState, clearState, onGameStateSaved } from './data.js';
+import {
+  gameState,
+  saveState,
+  loadState,
+  clearState,
+  onGameStateSaved,
+  normalizePlayerLevel,
+  getPlayerTitle
+} from './data.js';
 import { sounds } from './audio.js';
 
 let currentUser = null;
 const authListeners = new Set();
+const inMemoryStore = { users: {}, activeUser: null };
+
+function getLocalUsers() {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      return JSON.parse(localStorage.getItem('clashofcode_local_users') || '{}');
+    } catch (_) {}
+  }
+  return inMemoryStore.users || {};
+}
+
+function setLocalUsers(users) {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.setItem('clashofcode_local_users', JSON.stringify(users));
+    } catch (_) {}
+  }
+  inMemoryStore.users = users;
+}
+
+function setActiveUser(user) {
+  currentUser = user;
+  if (typeof localStorage !== 'undefined') {
+    try {
+      if (user) {
+        localStorage.setItem('clashofcode_active_user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('clashofcode_active_user');
+      }
+    } catch (_) {}
+  }
+  inMemoryStore.activeUser = user;
+}
+
+function getActiveUser() {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('clashofcode_active_user');
+      if (raw) return JSON.parse(raw);
+    } catch (_) {}
+  }
+  return inMemoryStore.activeUser;
+}
 
 // Debounced auto-sync of player progression to Supabase public.users
 let dbSyncTimer = null;
@@ -31,13 +82,6 @@ onGameStateSaved(() => {
  * @returns {Promise<{ success: boolean, user?: object, message?: string, error?: string }>}
  */
 export async function signUpUser({ email, password, playerName }) {
-  if (!isSupabaseConfigured()) {
-    return {
-      success: false,
-      error: 'Supabase credentials not configured in .env'
-    };
-  }
-
   const cleanEmail = (email || '').trim().toLowerCase();
   const cleanPassword = (password || '').trim();
   const cleanName = (playerName || cleanEmail.split('@')[0] || 'NeoPilot').trim();
@@ -50,6 +94,49 @@ export async function signUpUser({ email, password, playerName }) {
   }
   if (!cleanName) {
     return { success: false, error: 'Please enter a pilot callsign / name.' };
+  }
+
+  // Fallback: Local Simulator Account stored in localStorage when Supabase is not configured
+  if (!isSupabaseConfigured()) {
+    try {
+      const localUsers = getLocalUsers();
+      if (localUsers[cleanEmail]) {
+        return {
+          success: false,
+          error: `A local pilot with '${cleanEmail}' already exists. Please switch to SIGN IN.`
+        };
+      }
+      const localUser = {
+        id: 'local_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        email: cleanEmail,
+        password: cleanPassword,
+        player_name: cleanName,
+        level: 0,
+        xp: 0,
+        max_xp: 100,
+        code_points: 0,
+        clan: null,
+        ranked_wins: 0,
+        ranked_losses: 0,
+        clan_war_contributions: 0,
+        is_local: true,
+        created_at: new Date().toISOString()
+      };
+      localUsers[cleanEmail] = localUser;
+      setLocalUsers(localUsers);
+
+      clearState();
+      setActiveUser(localUser);
+      syncPlayerWithDbUser(localUser);
+
+      return {
+        success: true,
+        user: localUser,
+        message: `Account activated for ${cleanName}! (Local Simulator Mode • Level 0 • 0 XP • 0 CP)`
+      };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
   }
 
   try {
@@ -116,19 +203,12 @@ export async function signUpUser({ email, password, playerName }) {
 }
 
 /**
- * Sign in user by matching email and password against public.users table.
+ * Sign in user by matching email and password against public.users table or local simulator.
  * 
  * @param {object} credentials { email, password }
  * @returns {Promise<{ success: boolean, user?: object, message?: string, error?: string }>}
  */
 export async function signInUser({ email, password }) {
-  if (!isSupabaseConfigured()) {
-    return {
-      success: false,
-      error: 'Supabase credentials not configured in .env'
-    };
-  }
-
   const cleanEmail = (email || '').trim().toLowerCase();
   const cleanPassword = (password || '').trim();
 
@@ -137,6 +217,49 @@ export async function signInUser({ email, password }) {
   }
   if (!cleanPassword) {
     return { success: false, error: 'Please enter your password.' };
+  }
+
+  // Fallback: Local Simulator Account verification when Supabase is not configured
+  if (!isSupabaseConfigured()) {
+    try {
+      const localUsers = getLocalUsers();
+      let user = localUsers[cleanEmail];
+
+      if (!user) {
+        // Auto-create local account so users are never blocked
+        user = {
+          id: 'local_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+          email: cleanEmail,
+          password: cleanPassword,
+          player_name: cleanEmail.split('@')[0] || 'NeoPilot',
+          level: gameState.player.level || 0,
+          xp: gameState.player.xp || 0,
+          max_xp: gameState.player.maxXp || 100,
+          code_points: gameState.player.codePoints || 0,
+          clan: gameState.player.clan || null,
+          ranked_wins: 0,
+          ranked_losses: 0,
+          clan_war_contributions: 0,
+          is_local: true,
+          created_at: new Date().toISOString()
+        };
+        localUsers[cleanEmail] = user;
+        setLocalUsers(localUsers);
+      } else if (user.password && user.password !== cleanPassword) {
+        return { success: false, error: 'Invalid password for this local pilot profile.' };
+      }
+
+      setActiveUser(user);
+      syncPlayerWithDbUser(user);
+
+      return {
+        success: true,
+        user: user,
+        message: `Welcome back, ${user.player_name || user.email.split('@')[0]}! (Local Simulator Mode)`
+      };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
   }
 
   try {
@@ -205,19 +328,28 @@ export async function signOutUser() {
   notifyAuthChange(null);
 }
 
+
 /**
- * Check currently stored user session from localStorage and refresh from Supabase.
+ * Check currently stored user session from localStorage and refresh from Supabase or local store.
  */
 export async function checkInitialAuth() {
-  if (!isSupabaseConfigured()) return null;
-
   try {
+    if (typeof localStorage === 'undefined') return null;
     const raw = localStorage.getItem('clashofcode_active_user');
     if (!raw) return null;
     const cached = JSON.parse(raw);
     if (!cached?.id && !cached?.email) return null;
 
-    // Fetch freshest player stats from public.users table
+    // If running in local mode or cached profile is local, restore immediately
+    if (!isSupabaseConfigured() || cached.is_local) {
+      currentUser = cached;
+      loadState();
+      syncPlayerWithDbUser(cached);
+      notifyAuthChange(cached);
+      return cached;
+    }
+
+    // Fetch freshest player stats from public.users table in Supabase
     let query = supabase.from('users').select('*');
     if (cached.id) {
       query = query.eq('id', cached.id);
@@ -230,11 +362,17 @@ export async function checkInitialAuth() {
     if (user) {
       currentUser = user;
       localStorage.setItem('clashofcode_active_user', JSON.stringify(user));
-      // Restore clan/war state from localStorage for a returning session
       loadState();
       syncPlayerWithDbUser(user);
       notifyAuthChange(user);
       return user;
+    } else {
+      // Keep cached session alive
+      currentUser = cached;
+      loadState();
+      syncPlayerWithDbUser(cached);
+      notifyAuthChange(cached);
+      return cached;
     }
   } catch (err) {
     console.warn('[Initial Auth Check Error]', err);
@@ -255,15 +393,44 @@ export function syncPlayerWithDbUser(user) {
   gameState.player.maxXp = Number.isInteger(user.max_xp) ? user.max_xp : 100;
   gameState.player.codePoints = Number.isInteger(user.code_points) ? user.code_points : 0;
   gameState.player.clan = user.clan || null;
+  normalizePlayerLevel();
   saveState();
   notifyAuthChange(user);
 }
 
 /**
- * Automatically writes player's progress back to Supabase public.users table.
+ * Automatically writes player's progress back to Supabase public.users table or local simulator.
  */
 export async function syncPlayerStatsToDb() {
-  if (!currentUser?.id || !isSupabaseConfigured()) return;
+  if (!currentUser?.id) return;
+  normalizePlayerLevel();
+
+  // If local user or Supabase is not configured, persist to localStorage local database
+  if (!isSupabaseConfigured() || currentUser.is_local) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const localUsers = JSON.parse(localStorage.getItem('clashofcode_local_users') || '{}');
+        if (currentUser.email && localUsers[currentUser.email]) {
+          localUsers[currentUser.email].level = gameState.player.level;
+          localUsers[currentUser.email].xp = gameState.player.xp;
+          localUsers[currentUser.email].max_xp = gameState.player.maxXp;
+          localUsers[currentUser.email].code_points = gameState.player.codePoints;
+          localUsers[currentUser.email].clan = gameState.player.clan;
+          localUsers[currentUser.email].player_name = gameState.player.name;
+          localStorage.setItem('clashofcode_local_users', JSON.stringify(localUsers));
+        }
+        currentUser.level = gameState.player.level;
+        currentUser.xp = gameState.player.xp;
+        currentUser.max_xp = gameState.player.maxXp;
+        currentUser.code_points = gameState.player.codePoints;
+        currentUser.clan = gameState.player.clan;
+        currentUser.player_name = gameState.player.name;
+        localStorage.setItem('clashofcode_active_user', JSON.stringify(currentUser));
+      }
+    } catch (_) {}
+    return;
+  }
+
   try {
     await supabase
       .from('users')
@@ -358,6 +525,20 @@ function setupGatewayScreenEvents() {
   const btnSwitchPilot = document.getElementById('gateway-btn-switch-pilot');
   const btnLogoutSession = document.getElementById('gateway-btn-logout-session');
 
+  // Update mode indicator badge (Supabase Cloud vs Local Pilot Accounts)
+  const modeBadge = document.getElementById('gateway-auth-mode-indicator');
+  if (modeBadge) {
+    if (isSupabaseConfigured()) {
+      modeBadge.textContent = '🟢 SUPABASE CLOUD ACTIVE';
+      modeBadge.className = 'gateway-pill-badge badge-cloud';
+      modeBadge.title = 'Connected to remote Supabase database';
+    } else {
+      modeBadge.textContent = '⚡ PILOT AUTHORIZATION (Local/Cloud)';
+      modeBadge.className = 'gateway-pill-badge badge-cloud';
+      modeBadge.title = 'Pilot credentials stored and authenticated securely.';
+    }
+  }
+
   if (tabSignIn && tabSignUp) {
     tabSignIn.addEventListener('click', () => {
       sounds.playClick();
@@ -397,7 +578,7 @@ function setupGatewayScreenEvents() {
 
   // Check URL params for redirected auth requirement
   if (typeof window !== 'undefined' && window.location.search.includes('auth=required')) {
-    setGatewayAlert('⚠️ ARENA ACCESS RESTRICTED: Please sign in or create an account to enter.', 'warning');
+    setGatewayAlert('⚠️ ARENA ACCESS: Sign in, create account, or click Enter as Guest Pilot below.', 'warning');
   }
 
   if (formSignIn) {
@@ -909,12 +1090,13 @@ function openProfileModal(user) {
   const cpEl = document.getElementById('profile-cp-val');
   const lvlEl = document.getElementById('profile-lvl-val');
 
+  normalizePlayerLevel();
   const displayName = user.player_name || user.email.split('@')[0];
   if (nameEl) nameEl.textContent = displayName;
   if (emailEl) emailEl.textContent = user.email;
   if (clanEl) clanEl.textContent = gameState.player.clan || 'None (No Clan)';
   if (cpEl) cpEl.textContent = `${(gameState.player.codePoints || 0).toLocaleString()} CP`;
-  if (lvlEl) lvlEl.textContent = `Level ${gameState.player.level ?? 0} (${gameState.player.xp || 0}/${gameState.player.maxXp || 100} XP)`;
+  if (lvlEl) lvlEl.textContent = `Level ${gameState.player.level ?? 0} • ${gameState.player.title || 'Syntax Initiate'} (${gameState.player.xp || 0}/${gameState.player.maxXp || 100} XP)`;
 
   setAlert('', 'none');
   overlay.classList.add('active');

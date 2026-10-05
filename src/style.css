@@ -604,60 +604,64 @@ html, body {
   font-family: var(--font-code);
 }
 
-/* AI Coach Section */
+/* AI Coach Section - Compact & Proportional to prevent covering Missions */
 .ai-coach-section {
   position: relative;
-  z-index: 15;
-  width: 44%;
+  z-index: 10;
+  width: 28%;
+  max-width: 300px;
   height: 100%;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  padding: 8px 12px 10px;
+  padding: 4px 10px 8px;
   cursor: pointer;
+  overflow: visible;
+  flex-shrink: 0;
 }
 
 .coach-speech-bubble {
   position: relative;
-  width: 95%;
-  max-width: 420px;
+  width: 92%;
+  max-width: 275px;
   background: rgba(15, 23, 42, 0.96);
-  border: 2px solid var(--primary-violet);
-  border-radius: 18px;
-  padding: 12px 18px;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(124, 58, 237, 0.35);
-  margin-bottom: 8px;
-  z-index: 25;
+  border: 1.5px solid var(--primary-violet);
+  border-radius: 14px;
+  padding: 8px 12px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 16px rgba(124, 58, 237, 0.25);
+  margin-bottom: 6px;
+  z-index: 15;
   animation: floatBubble 4s ease-in-out infinite alternate;
 }
 
 .coach-speech-bubble::after {
   content: '';
   position: absolute;
-  bottom: -10px;
-  left: 60px;
+  bottom: -8px;
+  left: 40px;
   width: 0;
   height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 10px solid var(--primary-violet);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid var(--primary-violet);
 }
 
 .speech-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
-  font-size: 0.72rem;
+  margin-bottom: 4px;
+  font-size: 0.68rem;
   font-weight: 700;
 }
 
 .speech-title-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .coach-name-tag {
@@ -668,22 +672,22 @@ html, body {
 
 .speech-status {
   color: var(--neon-green);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
 }
 
 .speech-chip {
   background: rgba(124, 58, 237, 0.25);
   border: 1px solid var(--primary-violet);
   color: var(--primary-violet);
-  padding: 1px 8px;
-  border-radius: 6px;
-  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.6rem;
   font-weight: 800;
 }
 
 .speech-text {
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 0.76rem;
+  line-height: 1.32;
   color: #FFFFFF;
   font-weight: 500;
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -694,46 +698,47 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .speech-tip-hint {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   color: var(--neon-yellow);
   font-weight: 700;
 }
 
 .speech-key-hint {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--text-muted);
   font-family: var(--font-code);
 }
 
 .coach-avatar-wrapper {
   position: relative;
-  flex: 1;
+  flex: 0 1 auto;
   width: 100%;
-  max-height: 480px;
+  max-height: 220px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  filter: drop-shadow(0 0 25px rgba(6, 182, 212, 0.4));
+  filter: drop-shadow(0 0 18px rgba(6, 182, 212, 0.35));
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: 20;
+  z-index: 12;
 }
 
 .ai-coach-section:hover .coach-avatar-wrapper {
-  transform: scale(1.02) translateY(-4px);
-  filter: drop-shadow(0 0 35px rgba(167, 139, 250, 0.6));
+  transform: scale(1.02) translateY(-2px);
+  filter: drop-shadow(0 0 26px rgba(167, 139, 250, 0.55));
 }
 
 .coach-character-img {
-  height: 100%;
-  max-height: 440px;
+  height: auto;
+  max-height: 200px;
   width: auto;
+  max-width: 100%;
   object-fit: contain;
-  border-radius: 20px;
-  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 14px;
+  border: 1.5px solid rgba(56, 189, 248, 0.3);
   mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
 }
@@ -741,8 +746,8 @@ html, body {
 .hologram-pedestal {
   position: absolute;
   bottom: 0;
-  width: 240px;
-  height: 24px;
+  width: 160px;
+  height: 14px;
   background: radial-gradient(ellipse at center, rgba(56, 189, 248, 0.7) 0%, rgba(124, 58, 237, 0.3) 50%, transparent 80%);
   border-radius: 50%;
   filter: blur(4px);
@@ -751,7 +756,7 @@ html, body {
 
 .coach-hud-overlay {
   position: absolute;
-  bottom: 24px;
+  bottom: 12px;
   display: flex;
   justify-content: center;
   width: 100%;
@@ -760,21 +765,21 @@ html, body {
 .coach-tag-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: rgba(15, 23, 42, 0.95);
   border: 1.5px solid var(--neon-cyan);
-  border-radius: 20px;
-  padding: 4px 14px;
+  border-radius: 16px;
+  padding: 3px 10px;
   font-family: var(--font-display);
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   letter-spacing: 0.5px;
   color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 3px 10px rgba(6, 182, 212, 0.35);
 }
 
 .status-pulse {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--neon-cyan);
   box-shadow: 0 0 8px var(--neon-cyan);
@@ -785,11 +790,11 @@ html, body {
 .action-hub-grid {
   position: relative;
   z-index: 10;
-  width: 53%;
+  width: 68%;
   height: 100%;
   display: flex;
   gap: 16px;
-  padding: 10px 0;
+  padding: 8px 0;
 }
 
 .action-left-column {
@@ -1116,23 +1121,38 @@ html, body {
 /* BOTTOM DOCK */
 .bottom-dock {
   position: relative;
-  z-index: 10;
+  z-index: 100 !important;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 28px;
   width: 100%;
+  padding-top: 6px;
+  pointer-events: auto !important;
+  flex-shrink: 0;
 }
 
 .dock-btn {
   position: relative;
+  z-index: 105 !important;
   display: flex;
   flex-direction: column;
   align-items: center;
   background: transparent;
   border: none;
   cursor: pointer;
+  pointer-events: auto !important;
   transition: transform var(--transition-speed) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.missions-dock-btn {
+  z-index: 110 !important;
+  pointer-events: auto !important;
+}
+
+.missions-dock-btn:hover .dock-icon-circle {
+  border-color: #93C5FD;
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.8), inset 0 0 14px rgba(147, 197, 253, 0.5);
 }
 
 .dock-btn:hover {
@@ -3403,8 +3423,8 @@ html, body {
    ========================================================================== */
 @media (max-width: 1200px) {
   .battle-title { font-size: 2.2rem; }
-  .ai-coach-section { width: 44%; }
-  .action-hub-grid { width: 54%; }
+  .ai-coach-section { width: 30%; max-width: 300px; }
+  .action-hub-grid { width: 68%; }
   .battle-modes-stage { gap: 16px; }
   .banner-ranked .mode-banner-title { font-size: 2.1rem; }
   .banner-quick .mode-banner-title { font-size: 2rem; }
@@ -3423,7 +3443,9 @@ html, body {
   }
   .ai-coach-section {
     width: 100%;
-    height: 420px;
+    max-width: 320px;
+    height: auto;
+    max-height: 260px;
   }
   .action-hub-grid {
     width: 100%;
@@ -8047,5 +8069,460 @@ body:has(#auth-gateway-screen.active) #battle-screen {
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
 }
 
+/* ==============================================================================
+   LEVEL UP CELEBRATORY OVERLAY & FANFARE MODAL
+   ============================================================================== */
+.levelup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(3, 7, 18, 0.88);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.levelup-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.levelup-dialog {
+  position: relative;
+  width: 90%;
+  max-width: 480px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 27, 75, 0.95));
+  border: 2px solid #A855F7;
+  border-radius: 18px;
+  padding: 32px 28px;
+  text-align: center;
+  box-shadow: 0 0 50px rgba(168, 85, 247, 0.45), 0 20px 40px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  animation: levelupPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes levelupPop {
+  0% { transform: scale(0.7) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.levelup-sparkles {
+  position: absolute;
+  top: -50px;
+  left: -50px;
+  right: -50px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.levelup-badge-pill {
+  display: inline-block;
+  font-family: var(--font-tech);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #FACC15;
+  background: rgba(250, 204, 21, 0.15);
+  border: 1px solid rgba(250, 204, 21, 0.4);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.levelup-headline {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  letter-spacing: 0.06em;
+  background: linear-gradient(90deg, #FACC15, #E879F9, #38BDF8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 16px 0;
+  text-shadow: 0 0 20px rgba(232, 121, 249, 0.4);
+}
+
+.levelup-rank-disc {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 130px;
+  height: 130px;
+  margin: 0 auto 18px auto;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 3px solid #C084FC;
+  box-shadow: 0 0 30px rgba(192, 132, 252, 0.5), inset 0 0 20px rgba(168, 85, 247, 0.3);
+}
+
+.levelup-tier-text {
+  font-family: var(--font-tech);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #94A3B8;
+}
+
+.levelup-level-num {
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  line-height: 1;
+  color: #FFFFFF;
+  text-shadow: 0 0 15px #C084FC;
+}
+
+.levelup-title-tag {
+  font-family: var(--font-tech);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #38BDF8;
+}
+
+.levelup-congrats {
+  font-family: var(--font-tech);
+  font-size: 0.88rem;
+  color: #CBD5E1;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.levelup-reward-capsule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(250, 204, 21, 0.12);
+  border: 1px solid rgba(250, 204, 21, 0.4);
+  padding: 10px 16px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.levelup-reward-capsule .reward-lbl {
+  font-family: var(--font-tech);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94A3B8;
+}
+
+.levelup-reward-capsule .reward-val {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: #FDE047;
+  text-shadow: 0 0 10px rgba(253, 224, 71, 0.5);
+}
+
+.levelup-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(90deg, #9333EA, #3B82F6);
+  border: none;
+  border-radius: 10px;
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.4);
+}
+
+.levelup-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(147, 51, 234, 0.6);
+  background: linear-gradient(90deg, #A855F7, #60A5FA);
+}
+
+/* ==============================================================================
+   COACH ADA INTERACTIVE AI CHAT MODAL (Powered by gemini-3.6-flash)
+   ============================================================================== */
+.coach-chat-modal .modal-dialog {
+  max-width: 680px;
+  width: 95%;
+  height: 85vh;
+  max-height: 720px;
+  display: flex;
+  flex-direction: column;
+}
+
+.coach-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.coach-avatar-thumb {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #A855F7;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+}
+
+.coach-avatar-pic {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.coach-online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #0F172A;
+}
+
+.coach-online-dot.green { background: #22C55E; box-shadow: 0 0 6px #22C55E; }
+.coach-online-dot.yellow { background: #FACC15; box-shadow: 0 0 6px #FACC15; }
+
+.coach-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gemini-model-badge {
+  font-family: var(--font-tech);
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.coach-status-sub {
+  font-family: var(--font-tech);
+  font-size: 0.72rem;
+  color: #94A3B8;
+}
+
+.coach-chat-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 20px;
+  gap: 12px;
+}
+
+.coach-chips-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.coach-chip-btn {
+  white-space: nowrap;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #CBD5E1;
+  font-family: var(--font-tech);
+  font-size: 0.74rem;
+  padding: 5px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.coach-chip-btn:hover {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: #A855F7;
+  color: #FFFFFF;
+}
+
+.coach-messages-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 4px;
+}
+
+.coach-msg {
+  display: flex;
+  width: 100%;
+}
+
+.coach-msg.msg-ada {
+  justify-content: flex-start;
+}
+
+.coach-msg.msg-user {
+  justify-content: flex-end;
+}
+
+.coach-msg .msg-bubble {
+  max-width: 82%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-family: var(--font-tech);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.coach-msg.msg-ada .msg-bubble {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #F1F5F9;
+  border-top-left-radius: 2px;
+}
+
+.coach-msg.msg-user .msg-bubble {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.7), rgba(59, 130, 246, 0.7));
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  color: #FFFFFF;
+  border-top-right-radius: 2px;
+}
+
+.coach-msg .msg-author {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+  opacity: 0.75;
+}
+
+.coach-msg.msg-ada .msg-author { color: #C084FC; }
+.coach-msg.msg-user .msg-author { color: #FEF08A; }
+
+.ada-code-block {
+  background: #090D16;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  padding: 10px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: var(--font-code);
+  font-size: 0.8rem;
+  color: #38BDF8;
+}
+
+.ada-inline-code {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: var(--font-code);
+  font-size: 0.82rem;
+  color: #F472B6;
+}
+
+.coach-input-wrap {
+  display: flex;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.coach-chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px 14px;
+  color: #FFFFFF;
+  font-family: var(--font-tech);
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.coach-send-btn {
+  background: linear-gradient(90deg, #9333EA, #3B82F6);
+  border: none;
+  color: #FFFFFF;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-family: var(--font-tech);
+  font-weight: 800;
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.coach-send-btn:hover {
+  background: linear-gradient(90deg, #A855F7, #60A5FA);
+  transform: translateY(-1px);
+}
+
+.coach-footer-key-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-tech);
+  font-size: 0.72rem;
+  color: #94A3B8;
+  padding-top: 4px;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.coach-key-setup-btn {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #38BDF8;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--font-tech);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.coach-key-setup-btn:hover {
+  border-color: #38BDF8;
+  background: rgba(56, 189, 248, 0.15);
+}
+
+/* Quick Action Toolbar Buttons */
+.editor-quick-buttons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.coach-hint-btn {
+  background: rgba(139, 92, 246, 0.2) !important;
+  border-color: rgba(139, 92, 246, 0.5) !important;
+  color: #C084FC !important;
+}
+
+.coach-hint-btn:hover {
+  background: rgba(139, 92, 246, 0.35) !important;
+  border-color: #C084FC !important;
+  color: #FFFFFF !important;
+}
 
 
+.gateway-pill-badge.badge-cloud {
+  color: #4ADE80;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.gateway-pill-badge.badge-local {
+  color: #FBBF24;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}

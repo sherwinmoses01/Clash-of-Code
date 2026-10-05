@@ -14,10 +14,36 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Retrieve credentials from environment (Vite exposes variables prefixed with VITE_)
-const rawUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const rawKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabaseUrl = rawUrl.replace(/^["']|["']$/g, '');
-const supabaseAnonKey = rawKey.replace(/^["']|["']$/g, '');
+function resolveSupabaseCredentials() {
+  let url = '';
+  let key = '';
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      url = import.meta.env.VITE_SUPABASE_URL || '';
+      key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    } else if (typeof process !== 'undefined' && process.env) {
+      url = process.env.VITE_SUPABASE_URL || '';
+      key = process.env.VITE_SUPABASE_ANON_KEY || '';
+    }
+  } catch (_) {}
+
+  url = (url || '').replace(/^["']|["']$/g, '').trim().replace(/\/+$/, '');
+  key = (key || '').replace(/^["']|["']$/g, '').trim();
+
+  // Also support in-app localStorage configuration
+  if (typeof localStorage !== 'undefined') {
+    const storedUrl = (localStorage.getItem('clashofcode_supabase_url') || '').trim();
+    const storedKey = (localStorage.getItem('clashofcode_supabase_anon_key') || '').trim();
+    if (storedUrl && storedKey && !storedUrl.includes('your-project-id')) {
+      url = storedUrl;
+      key = storedKey;
+    }
+  }
+
+  return { url, key };
+}
+
+const { url: supabaseUrl, key: supabaseAnonKey } = resolveSupabaseCredentials();
 
 /**
  * Checks whether valid Supabase credentials have been configured in the .env file.
@@ -26,12 +52,13 @@ const supabaseAnonKey = rawKey.replace(/^["']|["']$/g, '');
  * @returns {boolean} True if credentials appear valid and ready for live cloud connection.
  */
 export function isSupabaseConfigured() {
-  if (!supabaseUrl || !supabaseAnonKey) return false;
-  if (supabaseUrl.includes('your-project-id') || supabaseAnonKey.includes('your-supabase-anon-key')) {
+  const { url, key } = resolveSupabaseCredentials();
+  if (!url || !key) return false;
+  if (url.includes('your-project-id') || key.includes('your-supabase-anon-key')) {
     return false;
   }
   try {
-    const parsed = new URL(supabaseUrl);
+    const parsed = new URL(url);
     return parsed.protocol === 'https:' && parsed.hostname.endsWith('.supabase.co');
   } catch {
     return false;
@@ -105,7 +132,7 @@ export async function checkSupabaseHealth() {
 }
 
 // Log status on development initialization
-if (import.meta.env.DEV) {
+if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
   if (isSupabaseConfigured()) {
     console.log(`[Clash of Code DB] Supabase initialized for endpoint: ${supabaseUrl}`);
   } else {

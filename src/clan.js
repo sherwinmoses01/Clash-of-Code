@@ -1,5 +1,5 @@
 // Clan Headquarters Controller for Clash of Code (clan.html)
-import { gameState, saveState } from './data.js';
+import { gameState, saveState, normalizePlayerLevel } from './data.js';
 import { sounds, spawnCrosshair } from './audio.js';
 import { generateRoomId } from './db.js';
 import { initAuthUI } from './auth.js';
@@ -39,12 +39,16 @@ function getActiveClan() {
 
 // Update Top HUD
 function updateClanHUD() {
+  normalizePlayerLevel();
   currentClan = getActiveClan();
 
-  if (hudCp) hudCp.textContent = gameState.player.codePoints.toLocaleString();
+  if (hudCp) hudCp.textContent = (gameState.player.codePoints || 0).toLocaleString();
   if (hudClanName) hudClanName.textContent = currentClan.name;
   if (hudClanTag) hudClanTag.textContent = currentClan.tag;
   if (hudClanEmblem) hudClanEmblem.textContent = currentClan.icon;
+
+  const lvlTag = document.querySelector('.avatar-lvl-tag');
+  if (lvlTag) lvlTag.textContent = `LV ${gameState.player.level ?? 0}`;
 
   const identityBadge = document.getElementById('clan-identity-badge');
   if (identityBadge && currentClan.bannerColor) {
