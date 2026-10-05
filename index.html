@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clash of Code | AI-Powered Gamified Tech Arena</title>
+  
+  <!-- Modern Google Fonts: Russo One (Display Gaming), Chakra Petch (Tech HUD), JetBrains Mono (Code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=JetBrains+Mono:wght@400;600&family=Russo+One&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body data-theme="cyberpunk">
+  <!-- Scanline & Ambient Vignette FX -->
+  <div class="screen-vignette"></div>
+  <div class="crt-scanlines"></div>
+
+  <!-- Tactical Click Crosshair Container -->
+  <div id="crosshair-container" class="crosshair-container"></div>
+
+  <!-- ==================== AUTH GATEWAY SCREEN (LOGIN / SIGN UP FIRST) ==================== -->
+  <div id="auth-gateway-screen" class="game-viewport screen-view auth-gateway-viewport active">
+    
+    <!-- Ambient Cyber Backdrop with Grid & Particles -->
+    <div class="auth-gateway-backdrop">
+      <div class="gateway-glow-orb orb-cyan"></div>
+      <div class="gateway-glow-orb orb-purple"></div>
+      <div class="cyber-grid-floor"></div>
+    </div>
+
+    <div class="auth-gateway-container">
+      
+      <!-- Clash of Code Cyber Logo & Headline -->
+      <div class="auth-gateway-brand">
+        <div class="gateway-shield-badge">
+          <span class="gateway-shield-icon">⚔️</span>
+        </div>
+        <div class="gateway-logo-text-group">
+          <span class="gateway-logo-tag">ARENA PILOT ACCESS CONTROL</span>
+          <h1 class="gateway-main-title">Clash of <span class="neon-cyan-text">Code</span></h1>
+          <p class="gateway-subtitle">AI-POWERED GAMIFIED TECH ARENA &bull; PROVE YOUR SYNTAX</p>
+        </div>
+      </div>
+
+      <!-- Auth Gateway Card (Glassmorphic Cyberpunk Card) -->
+      <div class="auth-gateway-card">
+        
+        <div class="auth-gateway-card-header">
+          <span class="gateway-pill-badge">⚡ INSTANT ID ACCESS &bull; NO EMAIL CONFIRMATION</span>
+          <h2 class="gateway-card-title" id="gateway-card-title">PILOT AUTHORIZATION</h2>
+        </div>
+
+        <!-- Active Pilot Session Panel (Shown if returning pilot session detected) -->
+        <div class="auth-active-session-panel" id="gateway-panel-session" style="display: none;">
+          <div class="active-pilot-header">
+            <div class="active-pilot-avatar">⚔️</div>
+            <div class="active-pilot-details">
+              <span class="active-pilot-tag">ACTIVE PILOT SESSION DETECTED</span>
+              <h3 class="active-pilot-name" id="gateway-session-pilot-name">NeoCoder_42</h3>
+              <span class="active-pilot-id" id="gateway-session-pilot-email">neocoder_42@clashofcode.io</span>
+            </div>
+          </div>
+          <div class="auth-actions-row session-actions-row">
+            <button type="button" class="auth-submit-btn gateway-submit-btn" id="gateway-btn-continue-session">
+              <span>🚀 ENTER ARENA COMMAND DECK</span>
+            </button>
+            <div class="session-alt-buttons">
+              <button type="button" class="gateway-alt-btn" id="gateway-btn-switch-pilot">
+                <span>🔑 Switch ID / Sign In</span>
+              </button>
+              <button type="button" class="gateway-alt-btn logout" id="gateway-btn-logout-session">
+                <span>🚪 Disconnect / Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Switcher: SIGN IN vs CREATE ACCOUNT -->
+        <div class="auth-tabs-row gateway-tabs-row" id="gateway-tabs-row">
+          <button class="auth-tab-btn active" id="gateway-tab-signin" type="button">
+            <span>🔑 SIGN IN</span>
+          </button>
+          <button class="auth-tab-btn" id="gateway-tab-signup" type="button">
+            <span>🛡️ CREATE ACCOUNT</span>
+          </button>
+        </div>
+
+        <!-- Alert Banner -->
+        <div class="auth-alert-banner" id="gateway-alert-banner" style="display: none;"></div>
+
+        <!-- TAB 1: SIGN IN FORM (EMAIL + PWD) -->
+        <form class="auth-form-panel active" id="gateway-form-signin" autocomplete="on">
+          <div class="auth-field-group">
+            <label for="gateway-signin-email" class="auth-field-label">PILOT EMAIL ADDRESS</label>
+            <input 
+              type="email" 
+              id="gateway-signin-email" 
+              class="auth-input-control" 
+              placeholder="e.g. pilot@clashofcode.com" 
+              required 
+              autocomplete="email"
+              autofocus
+            >
+            <span class="auth-field-hint highlight">⚡ Enter your registered email</span>
+          </div>
+
+          <div class="auth-field-group">
+            <label for="gateway-signin-password" class="auth-field-label">SECURITY PASSWORD</label>
+            <input 
+              type="password" 
+              id="gateway-signin-password" 
+              class="auth-input-control" 
+              placeholder="••••••••" 
+              required 
+              autocomplete="current-password"
+            >
+          </div>
+
+          <div class="auth-actions-row">
+            <button type="submit" class="auth-submit-btn gateway-submit-btn" id="gateway-btn-submit-signin">
+              <span>⚡ SIGN IN &amp; ENTER ARENA</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- TAB 2: CREATE ACCOUNT FORM (NAME + EMAIL + PWD) -->
+        <form class="auth-form-panel" id="gateway-form-signup" autocomplete="on" style="display: none;">
+          <div class="auth-field-group">
+            <label for="gateway-signup-name" class="auth-field-label">PILOT CALLSIGN / DISPLAY NAME</label>
+            <input 
+              type="text" 
+              id="gateway-signup-name" 
+              class="auth-input-control" 
+              placeholder="e.g. CyberValkyrie_01" 
+              required 
+              minlength="2"
+              autocomplete="name"
+            >
+          </div>
+
+          <div class="auth-field-group">
+            <label for="gateway-signup-email" class="auth-field-label">PILOT EMAIL ADDRESS</label>
+            <input 
+              type="email" 
+              id="gateway-signup-email" 
+              class="auth-input-control" 
+              placeholder="e.g. pilot@clashofcode.com" 
+              required 
+              autocomplete="email"
+            >
+            <span class="auth-field-hint highlight">✨ New accounts start fresh: Level 0 &bull; 0 XP &bull; 0 CP</span>
+          </div>
+
+          <div class="auth-field-group">
+            <label for="gateway-signup-password" class="auth-field-label">SECURITY PASSWORD (MIN 6 CHARACTERS)</label>
+            <input 
+              type="password" 
+              id="gateway-signup-password" 
+              class="auth-input-control" 
+              placeholder="••••••••" 
+              required 
+              minlength="6"
+              autocomplete="new-password"
+            >
+          </div>
+
+          <div class="auth-actions-row">
+            <button type="submit" class="auth-submit-btn btn-create-acc gateway-submit-btn" id="gateway-btn-submit-signup">
+              <span>🛡️ CREATE ACCOUNT &amp; ENTER ARENA</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Security Footer -->
+        <div class="gateway-footer-note">
+          <span>🔒 Supabase Cloud Identity &bull; Encrypted Session Tokens</span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ==================== HOME SCREEN VIEW ==================== -->
+  <div id="home-screen" class="game-viewport screen-view" style="display: none;">
+    
+    <!-- Top Bar HUD -->
+    <header class="top-hud">
+      <!-- Player Level & XP Gauge -->
+      <div class="hud-level-container" id="hud-level-btn" title="View Rank Progression & Rewards">
+        <div class="rank-shield-icon">
+          <svg class="shield-svg" viewBox="0 0 40 40">
+            <path d="M20 2 L36 9 V22 C36 30 20 38 20 38 C20 38 4 30 4 22 V9 Z" fill="url(#shield-grad)" stroke="#C084FC" stroke-width="2"/>
+            <path d="M12 18 L20 10 L28 18 L20 26 Z" fill="#E879F9" opacity="0.8"/>
+            <defs>
+              <linearGradient id="shield-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#8B5CF6"/>
+                <stop offset="100%" stop-color="#4C1D95"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span class="rank-num" id="hud-level-val">8</span>
+        </div>
+        
+        <div class="xp-gauge-wrapper">
+          <div class="xp-meta-row">
+            <span class="xp-title">SYNTAX MASTER</span>
+            <span class="xp-text" id="hud-xp-text">100/150</span>
+          </div>
+          <div class="xp-track">
+            <div class="xp-bar-fill" id="hud-xp-bar" style="width: 66.6%;"></div>
+          </div>
+        </div>
+
+        <button class="level-plus-btn" aria-label="Level perks info">
+          <span>+</span>
+        </button>
+      </div>
+
+      <!-- Center HUD: Littleroot Town BGM Controller -->
+      <div class="bgm-player-pill" id="bgm-track-indicator" title="Click to Play / Pause Littleroot Town BGM">
+        <div class="bgm-disk-icon">🎵</div>
+        <div class="bgm-info">
+          <span class="bgm-title">LITTLEROOT TOWN</span>
+          <span class="bgm-status" id="bgm-status-text">CLICK TO PLAY BGM</span>
+        </div>
+        <div class="equalizer-bars">
+          <span class="bar bar-1"></span>
+          <span class="bar bar-2"></span>
+          <span class="bar bar-3"></span>
+          <span class="bar bar-4"></span>
+        </div>
+      </div>
+
+      <!-- Right HUD: Currency & Controls -->
+      <div class="hud-right-group">
+        <!-- Supabase Auth / User Badge Widget -->
+        <div id="auth-hud-widget" class="auth-hud-widget"></div>
+
+        <div class="currency-pill" id="currency-pill">
+          <div class="coin-icon">
+            <div class="coin-glint"></div>
+            <span>CP</span>
+          </div>
+          <span class="currency-amount" id="hud-cp-val">6,000</span>
+          <span class="currency-unit">CP</span>
+        </div>
+
+        <button id="audio-toggle-btn" class="hud-action-btn" title="Toggle Sound FX">
+          <svg class="hud-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+
+        <button id="fullscreen-btn" class="hud-action-btn" title="Toggle Fullscreen">
+          <svg class="hud-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Stage -->
+    <main class="main-stage">
+      <div class="arena-backdrop">
+        <img src="/assets/arena_bg.jpg" alt="Cyber Arena Control Center" class="arena-bg-img">
+        <div class="arena-screen-glow"></div>
+        <div class="stadium-live-ticker">
+          <span class="ticker-dot"></span>
+          <span class="ticker-label">ARENA LIVE</span>
+          <span class="ticker-text">CODE CHAMPIONSHIP 2026 • MATCH 3: NEON KNIGHTS vs CYBER DRAGONS</span>
+        </div>
+      </div>
+
+      <!-- AI Coach Section -->
+      <section class="ai-coach-section" id="ai-coach-trigger" title="Click to chat with Coach Ada">
+        <div class="coach-speech-bubble" id="coach-speech">
+          <div class="speech-header">
+            <div class="speech-title-line">
+              <span class="coach-name-tag">COACH ADA [AI]</span>
+              <span class="speech-status">COCKPIT ONLINE</span>
+            </div>
+            <span class="speech-chip">TACTICAL BRIEF</span>
+          </div>
+          <p class="speech-text" id="coach-text">
+            "Ready to clash in the arena? Remember: premature optimization is the root of all bugs!"
+          </p>
+          <div class="speech-footer-line">
+            <span class="speech-tip-hint">Click Coach for tactical advice ⚡</span>
+            <span class="speech-key-hint">[Press C]</span>
+          </div>
+        </div>
+
+        <div class="coach-avatar-wrapper">
+          <div class="hologram-pedestal"></div>
+          <div class="coach-aura"></div>
+          <img src="/assets/ai_coach.jpg" alt="AI Coach Ada" class="coach-character-img">
+          <div class="coach-hud-overlay">
+            <div class="coach-tag-pill">
+              <span class="status-pulse"></span>
+              <span>ADA • AI MENTOR</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Action Cards Hub -->
+      <section class="action-hub-grid">
+        <div class="action-left-column">
+          <!-- BATTLE HERO CARD -> Opens Battle Screen! -->
+          <div class="game-card battle-card" id="btn-battle" role="button" tabindex="0" title="Enter Battle Arena Mode Selection">
+            <div class="card-bg-wrap">
+              <img src="/assets/battle_banner.jpg" alt="Coding Battle" class="card-bg-img">
+              <div class="card-gradient-overlay"></div>
+            </div>
+            <div class="battle-title-banner">
+              <h2 class="card-title-text battle-title">BATTLE</h2>
+              <div class="battle-arrow-indicator">
+                <span class="arrow-shape">▶</span>
+              </div>
+            </div>
+            <div class="card-sub-info">
+              <span class="mode-tag">RANKED & QUICK</span>
+              <span class="mode-tag red-tag">BUG BOSS RAID</span>
+            </div>
+          </div>
+
+          <!-- CLAN SUB-CARD -->
+          <div class="game-card clan-card" id="btn-clan" role="button" tabindex="0">
+            <div class="clan-promo-pill">
+              <span>Join a Dev Clan!</span>
+            </div>
+            <div class="card-bg-wrap">
+              <img src="/assets/recruit_banner.jpg" alt="Developer Clans" class="card-bg-img clan-img">
+              <div class="clan-gradient-overlay"></div>
+            </div>
+            <div class="clan-content">
+              <h3 class="card-title-text clan-title">CLAN</h3>
+              <span class="clan-desc">Guild Wars, Team Hackathons & Vaults</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-right-column">
+          <div class="game-card stack-card repo-card learn-card" id="btn-learn" role="button" tabindex="0" title="Open Striver's A2Z DSA Roadmap">
+            <div class="stack-card-inner">
+              <div class="stack-card-text">
+                <h3 class="card-title-text repo-title learn-title">LEARN</h3>
+                <span class="stack-card-sub">DSA Road Map</span>
+              </div>
+              <div class="stack-card-thumbnail">
+                <img src="/assets/repo_icon.jpg" alt="DSA Road Map" class="thumb-img">
+              </div>
+            </div>
+          </div>
+
+          <div class="game-card stack-card train-card" id="btn-train" role="button" tabindex="0">
+            <div class="alert-exclamation-badge">!</div>
+            <div class="stack-card-inner">
+              <div class="stack-card-text">
+                <h3 class="card-title-text train-title">TRAIN</h3>
+                <span class="stack-card-sub">Daily Kata Dojo</span>
+              </div>
+              <div class="stack-card-thumbnail">
+                <img src="/assets/train_icon.jpg" alt="Training Sparring Bot" class="thumb-img">
+              </div>
+            </div>
+          </div>
+
+          <div class="game-card stack-card shop-card" id="btn-shop" role="button" tabindex="0">
+            <div class="stack-card-inner">
+              <div class="stack-card-text">
+                <h3 class="card-title-text shop-title">SHOP</h3>
+                <span class="stack-card-sub">Dev Gear & Themes</span>
+              </div>
+              <div class="stack-card-thumbnail">
+                <img src="/assets/shop_icon.jpg" alt="Dev Gear Shop" class="thumb-img">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation Dock -->
+    <nav class="bottom-dock">
+      <button class="dock-btn missions-dock-btn" id="btn-missions" title="Daily Missions & Quests">
+        <div class="dock-badge-dot" id="missions-badge-dot">2</div>
+        <div class="dock-icon-circle">
+          <svg class="dock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+        </div>
+        <span class="dock-label-pill">Missions</span>
+      </button>
+
+      <button class="dock-btn mailbox-dock-btn" id="btn-mailbox" title="Dev Inbox & Transmissions">
+        <div class="dock-badge-dot" id="mailbox-badge-dot">1</div>
+        <div class="dock-icon-circle mailbox-circle">
+          <svg class="dock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+        </div>
+        <span class="dock-label-pill">Mailbox</span>
+      </button>
+
+      <button class="dock-btn style-dock-btn" id="btn-style" title="Theme Customizer & Outfits">
+        <div class="dock-icon-circle style-circle">
+          <svg class="dock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path>
+          </svg>
+        </div>
+        <span class="dock-label-pill">Style</span>
+      </button>
+
+      <button class="dock-btn submenu-dock-btn" id="btn-submenu" title="Command Settings & Leaderboard">
+        <div class="dock-icon-circle submenu-circle">
+          <svg class="dock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+        </div>
+        <span class="dock-label-pill">Submenu</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ==================== BATTLE SELECTION SCREEN VIEW (battle.png) ==================== -->
+  <div id="battle-screen" class="game-viewport screen-view battle-view">
+    
+    <!-- Background Backdrop with Teal/Emerald Particles (Matching battle.png) -->
+    <div class="battle-screen-backdrop">
+      <img src="/assets/battle_screen_bg.jpg" alt="Cyber Battle Arena Cosmos" class="battle-backdrop-img">
+      <div class="battle-particles-glow"></div>
+    </div>
+
+    <!-- Battle Screen Top Header (No "SINGLE PLAYER" title as requested!) -->
+    <header class="battle-top-hud">
+      <!-- Left: Interactive Back Button with Breadcrumb -->
+      <button class="battle-back-btn" id="battle-screen-back-btn" title="Return to Command Deck (B / ESC)">
+        <span class="back-arrow">‹</span>
+        <span class="back-text">BACK TO HUB</span>
+      </button>
+
+      <!-- Center: Littleroot BGM Pill -->
+      <div class="bgm-player-pill mini-bgm" id="battle-bgm-indicator" title="Toggle Littleroot Town BGM">
+        <div class="bgm-disk-icon">🎵</div>
+        <span class="bgm-title">LITTLEROOT TOWN</span>
+        <div class="equalizer-bars">
+          <span class="bar bar-1"></span>
+          <span class="bar bar-2"></span>
+          <span class="bar bar-3"></span>
+        </div>
+      </div>
+
+      <!-- Right: Currency & Player Stats (Matching battle.png top-right HUD) -->
+      <div class="battle-top-stats">
+        <div class="stat-capsule gold-capsule">
+          <span class="capsule-val" id="battle-hud-cp">99,999</span>
+          <div class="capsule-icon gold-coin">🪙</div>
+        </div>
+        <div class="stat-capsule crystal-capsule">
+          <span class="capsule-val">999</span>
+          <div class="capsule-icon purple-crystal">💎</div>
+        </div>
+        <div class="battle-player-avatar">
+          <img src="/assets/ai_coach.jpg" alt="Player Avatar" class="mini-avatar-img">
+          <span class="avatar-lvl-tag">LV 8</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Battle Modes 3-Column Grid (Direct visual translation of battle.png) -->
+    <main class="battle-modes-stage">
+      
+      <!-- COLUMN 1: RANKED HERO CARD (Replaces TRIALS - Elevated with white border) -->
+      <div class="battle-mode-card ranked-hero-card" id="mode-card-ranked" role="button" tabindex="0">
+        <div class="mode-card-art-wrap">
+          <img src="/assets/ranked_char.jpg" alt="Ranked Cyber Algorithmic Champion" class="mode-character-img">
+          <div class="mode-art-gradient-overlay"></div>
+          <div class="mode-pixel-grid-fx"></div>
+        </div>
+        
+        <div class="mode-banner-strip banner-ranked">
+          <h2 class="mode-banner-title">RANKED</h2>
+          <p class="mode-banner-desc">
+            Climb the ELO ladder, defeat rival coders, win bonus perks and claim seasonal Grandmaster glory!
+          </p>
+        </div>
+      </div>
+
+      <!-- COLUMN 2: QUICK CARD (Replaces ARCADE - Tall card with yellow banner & Mecha Panda) -->
+      <div class="battle-mode-card quick-tall-card" id="mode-card-quick" role="button" tabindex="0">
+        <div class="mode-card-art-wrap">
+          <img src="/assets/quick_char.jpg" alt="Quick Mecha Brawler Panda" class="mode-character-img">
+          <div class="mode-art-gradient-overlay"></div>
+          <div class="mode-pixel-grid-fx yellow-pixels"></div>
+        </div>
+        
+        <div class="mode-banner-strip banner-quick">
+          <h2 class="mode-banner-title">QUICK</h2>
+          <p class="mode-banner-desc">
+            Fast-paced 3-minute rapid code sprints. Instant matchmaking, no ELO penalty!
+          </p>
+        </div>
+      </div>
+
+      <!-- COLUMN 3: RIGHT STACK (PRACTICE & TUTORIAL) -->
+      <div class="battle-mode-right-stack">
+        
+        <!-- Top Card: PRACTICE (Orange Banner & Robotic Wasp Mechanic) -->
+        <div class="battle-mode-card horizontal-mode-card practice-card" id="mode-card-practice" role="button" tabindex="0">
+          <div class="mode-card-art-wrap">
+            <img src="/assets/practice_char.jpg" alt="Practice Cyber Sparring Drone" class="mode-character-img">
+            <div class="mode-art-gradient-overlay"></div>
+            <div class="mode-pixel-grid-fx orange-pixels"></div>
+          </div>
+          
+          <div class="mode-banner-strip banner-practice">
+            <h2 class="mode-banner-title">PRACTICE</h2>
+            <p class="mode-banner-desc">
+              Spar against AI bots with infinite hints & custom test cases.
+            </p>
+          </div>
+        </div>
+
+        <!-- Bottom Card: TUTORIAL (Green Banner & Emerald Tree Golem) -->
+        <div class="battle-mode-card horizontal-mode-card tutorial-card" id="mode-card-tutorial" role="button" tabindex="0">
+          <div class="mode-card-art-wrap">
+            <img src="/assets/tutorial_char.jpg" alt="Tutorial Cyber Tree Golem" class="mode-character-img">
+            <div class="mode-art-gradient-overlay"></div>
+            <div class="mode-pixel-grid-fx green-pixels"></div>
+          </div>
+          
+          <div class="mode-banner-strip banner-tutorial">
+            <h2 class="mode-banner-title">TUTORIAL</h2>
+            <p class="mode-banner-desc">
+              Syntax fundamentals, Big-O bootcamp, and battle arena mechanics.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Battle Screen Bottom Bar (Controller style navigation matching battle.png) -->
+    <footer class="battle-bottom-nav">
+      <div class="nav-button-prompt" id="prompt-back-hub">
+        <span class="prompt-btn-circle circle-red">B</span>
+        <span class="prompt-text">BACK</span>
+      </div>
+      <div class="nav-button-prompt" id="prompt-confirm-mode">
+        <span class="prompt-btn-circle circle-green">A</span>
+        <span class="prompt-text">CONFIRM</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==================== MODAL OVERLAY WRAPPER ==================== -->
+  <div id="modal-container" class="modal-overlay"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
