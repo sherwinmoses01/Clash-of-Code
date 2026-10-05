@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clash of Code | Clan Headquarters</title>
+  
+  <!-- Modern Google Fonts: Russo One (Display Gaming), Chakra Petch (Tech HUD), JetBrains Mono (Code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=JetBrains+Mono:wght@400;600&family=Russo+One&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body data-theme="cyberpunk" class="clan-page-body">
+  <!-- Scanline & Ambient Vignette FX -->
+  <div class="screen-vignette"></div>
+  <div class="crt-scanlines"></div>
+
+  <!-- Tactical Click Crosshair Container -->
+  <div id="crosshair-container" class="crosshair-container"></div>
+
+  <!-- ==================== CLAN HEADQUARTERS VIEW (Inspired by battle.png) ==================== -->
+  <div id="clan-screen" class="game-viewport screen-view battle-view clan-viewport active">
+    
+    <!-- Cosmic Arena Backdrop (Matching battle.png aesthetic) -->
+    <div class="battle-screen-backdrop">
+      <img src="/assets/battle_screen_bg.jpg" alt="Cyber Arena Cosmos" class="battle-backdrop-img">
+      <div class="battle-particles-glow"></div>
+    </div>
+
+    <!-- Top HUD Bar -->
+    <header class="battle-top-hud clan-top-hud">
+      <!-- Left: Interactive Back Button with Breadcrumb -->
+      <a href="/" class="battle-back-btn" id="clan-back-btn" title="Return to Command Deck (B / ESC)">
+        <span class="back-arrow">‹</span>
+        <span class="back-text">BACK TO HUB</span>
+      </a>
+
+      <!-- Center: Littleroot BGM Pill -->
+      <div class="bgm-player-pill mini-bgm" id="clan-bgm-indicator" title="Toggle Littleroot Town BGM">
+        <div class="bgm-disk-icon">🎵</div>
+        <span class="bgm-title">LITTLEROOT TOWN</span>
+        <div class="equalizer-bars">
+          <span class="bar bar-1"></span>
+          <span class="bar bar-2"></span>
+          <span class="bar bar-3"></span>
+        </div>
+      </div>
+
+      <!-- Right: Currency, Clan Tag, Player Avatar, and RED LEAVE BUTTON -->
+      <div class="clan-top-hud-right">
+        <!-- Currency capsules -->
+        <div class="stat-capsule gold-capsule">
+          <span class="capsule-val" id="clan-hud-cp">6,000</span>
+          <div class="capsule-icon gold-coin">🪙</div>
+        </div>
+        <div class="stat-capsule crystal-capsule">
+          <span class="capsule-val">999</span>
+          <div class="capsule-icon purple-crystal">💎</div>
+        </div>
+
+        <!-- Active Clan Badge -->
+        <div class="stat-capsule clan-identity-capsule" id="clan-identity-badge" title="Your Active Guild">
+          <span class="clan-emblem-mini" id="clan-hud-emblem">🛡️</span>
+          <span class="capsule-val" id="clan-hud-name">BitKnights</span>
+          <span class="clan-tag-mini" id="clan-hud-tag">[KNIGHT]</span>
+        </div>
+
+        <!-- Supabase Pilot Auth Status / Sign In Widget -->
+        <div id="auth-hud-widget" class="auth-hud-widget"></div>
+
+        <!-- Player Avatar -->
+        <div class="battle-player-avatar">
+          <img src="/assets/ai_coach.jpg" alt="Player Avatar" class="mini-avatar-img">
+          <span class="avatar-lvl-tag">LV 8</span>
+        </div>
+
+        <!-- RED LEAVE BUTTON (in the corner) -->
+        <button class="clan-leave-corner-btn" id="btn-leave-clan" title="Leave Current Clan (X)">
+          <span class="leave-icon">🚪</span>
+          <span class="leave-text">LEAVE CLAN</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Stage: 2 BIG BUTTONS (Inspired by battle.png Hero Cards) -->
+    <main class="battle-modes-stage clan-2col-stage">
+      
+      <!-- CARD 1: CLAN INFO (Grand Hero Card) -->
+      <div class="battle-mode-card clan-hero-card clan-info-card" id="card-clan-info" role="button" tabindex="0">
+        <div class="mode-card-art-wrap">
+          <img src="/assets/recruit_banner.jpg" alt="Clan Roster and Guild Vault" class="mode-character-img clan-art-img">
+          <div class="mode-art-gradient-overlay"></div>
+          <div class="mode-pixel-grid-fx"></div>
+        </div>
+        
+        <div class="mode-banner-strip banner-clan-info">
+          <div class="clan-strip-badge-row">
+            <span class="clan-pill-tag cyan-pill">GUILD ROSTER & VAULT</span>
+            <span class="clan-strip-stat">👥 48 / 50 MEMBERS</span>
+          </div>
+          <h2 class="mode-banner-title">CLAN INFO</h2>
+          <p class="mode-banner-desc">
+            Inspect active roster, leaderboards, player CP contributions, and shared algorithmic snippet vaults.
+          </p>
+          <div class="clan-card-perks-bar">
+            <span class="perk-chip">🔥 +20% Bonus XP</span>
+            <span class="perk-chip">📦 12 Shared Decks</span>
+            <span class="perk-chip">⭐ 14,820 CP</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: CLAN WAR (Grand Hero Card) -->
+      <div class="battle-mode-card clan-hero-card clan-war-card" id="card-clan-war" role="button" tabindex="0">
+        <div class="mode-card-art-wrap">
+          <img src="/assets/battle_banner.jpg" alt="Syndicate Clan War Clash" class="mode-character-img clan-art-img">
+          <div class="mode-art-gradient-overlay"></div>
+          <div class="mode-pixel-grid-fx orange-pixels"></div>
+        </div>
+        
+        <div class="mode-banner-strip banner-clan-war">
+          <div class="clan-strip-badge-row">
+            <span class="clan-pill-tag orange-pill">WEEKLY SYNDICATE RAID</span>
+            <span class="clan-strip-stat status-idle" id="clan-war-status-badge">● NO ONGOING WAR</span>
+          </div>
+          <h2 class="mode-banner-title">CLAN WAR</h2>
+          <p class="mode-banner-desc" id="clan-war-desc-text">
+            Engage in the 7-day 50-territory continent conquest against rival syndicates. 5 tactical attempts per member.
+          </p>
+          <div class="clan-card-perks-bar" id="clan-war-chips-bar">
+            <span class="perk-chip war-chip">🗺️ 50 Territories</span>
+            <span class="perk-chip trophy-chip">🏆 50,000 CP Pool</span>
+            <span class="perk-chip round-chip">⚡ 5 Attempts / Member</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Battle Screen Bottom Bar (Controller style prompts matching battle.png) -->
+    <footer class="battle-bottom-nav clan-bottom-nav">
+      <div class="nav-button-prompt prompt-leave-danger" id="prompt-leave-hub">
+        <span class="prompt-btn-circle circle-red">X</span>
+        <span class="prompt-text">LEAVE CLAN</span>
+      </div>
+      <div class="nav-button-prompt" id="prompt-back-hub">
+        <span class="prompt-btn-circle circle-red">B</span>
+        <span class="prompt-text">BACK TO HUB</span>
+      </div>
+      <div class="nav-button-prompt" id="prompt-confirm-mode">
+        <span class="prompt-btn-circle circle-green">A</span>
+        <span class="prompt-text">SELECT</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==================== MODAL OVERLAY WRAPPER ==================== -->
+  <div id="modal-container" class="modal-overlay"></div>
+
+  <script type="module" src="/src/clan.js"></script>
+</body>
+</html>
